@@ -32,4 +32,4 @@ async def main():
 
 # dc.client.loop.create_task(main())
 # dc.start()
-# asyncio.run(main())
+asyncio.run(main())
