@@ -154,7 +154,7 @@ def fill(state, nargs, args):
     if (color is None):
         return
 
-    state.controller.set_effect(FillEffect(color))
+    state.controller.set_effect(FillEffect(ColorAdapter(color)))
 
 
 def blink(state, nargs, args):
@@ -177,7 +177,7 @@ def blink(state, nargs, args):
         state.send(f'Error {args[-1]} is not a valid time')
         return
     
-    state.controller.set_effect(BlinkEffect(color, time))
+    state.controller.set_effect(BlinkEffect(FillEffect(ColorAdapter(color)), time))
 
 def color_wipe(state, nargs, args):
     if (nargs < 3):

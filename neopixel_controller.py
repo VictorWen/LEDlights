@@ -44,6 +44,7 @@ class NeoPixelController:
             
             elif (self.effect.type == STATIC):
                 self.effect.tick(self.pixels, 0)
+                self.pixels.show()
                 await self.wait_event.wait()
                 self.wait_event.clear()
             
@@ -51,4 +52,5 @@ class NeoPixelController:
                 time_delta = datetime.datetime.now() - timer
                 timer = datetime.datetime.now()
                 self.effect.tick(self.pixels, time_delta.total_seconds())
+                self.pixels.show()
                 await asyncio.sleep(self.delay)

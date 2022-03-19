@@ -19,12 +19,12 @@ async def main():
         n = int(sys.argv[1])
     pixels = neopixel.NeoPixel(board.D18, n, brightness=0.35, auto_write=False)
 
-    pixel_control = NeoPixelController(pixels, tps=25)
+    pixel_control = NeoPixelController(pixels, tps=50)
     state = State(pixel_control, pixels)
     cli = CommandLineInterpreter(commands, state)
 
     task = asyncio.create_task(pixel_control.run())
-    pixel_control.set_effect(ColorWipe(RainbowColorSelector(), 1))
+    pixel_control.set_effect(BlinkEffect(ColorWipe(ColorAdapter(RainbowColorSelector()), 5), 0.1))
 
     asyncio.create_task(cli.run())
 
