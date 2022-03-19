@@ -10,6 +10,36 @@ class SingleColorSelector(ColorSelector):
     def get_color(self, value):
         return self.color
 
+
+class SplitColorSelector(ColorSelector):
+    def __init__(self, color1, color2):
+        super().__init__()
+        self.color1 = color1
+        self.color2 = color2
+
+    def get_color(self, value):
+        if value > 0.5:
+            return self.color2
+        else:
+            return self.color1
+
+
+class Split3ColorSelector(ColorSelector):
+    def __init__(self, color1, color2, color3):
+        super().__init__()
+        self.color1 = color1
+        self.color2 = color2
+        self.color3 = color3
+
+    def get_color(self, value):
+        if value > 0.677:
+            return self.color3
+        elif value > 0.333:
+            return self.color2
+        else:
+            return self.color1
+
+
 class GradientColorSelector(ColorSelector):
     def __init__(self, color1, color2) -> None:
         super().__init__()
@@ -19,6 +49,38 @@ class GradientColorSelector(ColorSelector):
     
     def get_color(self, value):
         return tuple(int(self.color1[i] + value * self.difference[i]) for i in range(3))
+
+
+class Gradient3ColorSelector(ColorSelector):
+    def __init__(self, color1, color2, color3) -> None:
+        super().__init__()
+        self.color1 = color1
+        self.color2 = color2
+        self.color3 = color3
+        self.difference1 = tuple(int(color2[i] - color1[i]) for i in range(3))
+        self.difference2 = tuple(int(color3[i] - color2[i]) for i in range(3))
+    
+    def get_color(self, value):
+        value *= 2
+        if value > 1:
+            return tuple(int(self.color2[i] + (value - 1) * self.difference2[i]) for i in range(3))
+        else:
+            return tuple(int(self.color1[i] + value * self.difference1[i]) for i in range(3))
+
+
+class RGBColorSelector(ColorSelector):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def get_color(self, value):
+        value *= 2
+        if (value == 2):
+            return (0, 0, 255)
+        elif (value % 2 < 1):
+            return (int(255 * (1 - (value % 1))), int(255 * (value % 1)), 0)
+        elif (value % 2 < 2):
+            return (0, int(255 * (2 - value)), int(255 * (value - 1)))
+
 
 class RainbowColorSelector(ColorSelector):
     def __init__(self) -> None:

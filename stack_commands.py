@@ -95,6 +95,7 @@ def fill(state, nargs, args):
 def gradient(state, nargs, args):
     if (nargs < 2):
         state.send(f"Format: {args[0]} COLOR1 COLOR2")
+        return
     
     color1 = colorname_to_color(args[1])
     if (color1 is None):
@@ -107,8 +108,67 @@ def gradient(state, nargs, args):
     state.last_command_result = ColorAdapter(GradientColorSelector(color1, color2))
 
 
+def gradient3(state, nargs, args):
+    if (nargs < 4):
+        state.send(f"Format: {args[0]} COLOR1 COLOR2 COLOR3")
+        return
+    
+    color1 = colorname_to_color(args[1])
+    if (color1 is None):
+        return
+    
+    color2 = colorname_to_color(args[2])
+    if (color2 is None):
+        return
+    
+    color3 = colorname_to_color(args[3])
+    if (color3 is None):
+        return
+    
+    state.last_command_result = ColorAdapter(Gradient3ColorSelector(color1, color2, color3))
+
+
+def split(state, nargs, args):
+    if (nargs < 2):
+        state.send(f"Format: {args[0]} COLOR1 COLOR2")
+        return
+    
+    color1 = colorname_to_color(args[1])
+    if (color1 is None):
+        return
+    
+    color2 = colorname_to_color(args[2])
+    if (color2 is None):
+        return
+    
+    state.last_command_result = ColorAdapter(SplitColorSelector(color1, color2))
+
+
+def split3(state, nargs, args):
+    if (nargs < 4):
+        state.send(f"Format: {args[0]} COLOR1 COLOR2 COLOR3")
+        return
+    
+    color1 = colorname_to_color(args[1])
+    if (color1 is None):
+        return
+    
+    color2 = colorname_to_color(args[2])
+    if (color2 is None):
+        return
+    
+    color3 = colorname_to_color(args[3])
+    if (color3 is None):
+        return
+    
+    state.last_command_result = ColorAdapter(Split3ColorSelector(color1, color2, color3))
+
+
 def rainbow(state, nargs, args):
     state.last_command_result = ColorAdapter(RainbowColorSelector())
+
+def redgreenblue(state, nargs, args):
+    state.last_command_result = ColorAdapter(RGBColorSelector())
 
 
 def rgb(state, nargs, args):
@@ -344,7 +404,11 @@ def get_colors(state, nargs, args):
 commands = [
     Command("fill", fill, "EFFECT", 1),
     Command("gradient", gradient, "EFFECT", 2),
+    Command("gradient3", gradient3, "EFFECT", 3),
+    Command("split", split, "EFFECT", 2),
+    Command("split3", split3, "EFFECT", 3),
     Command("rainbow", rainbow, "EFFECT", 0),
+    Command("redgreenblue", redgreenblue, "EFFECT", 0),
     Command("rgb", rgb, "EFFECT", 3),
     Command("hex", hex, "EFFECT", 1),
 
