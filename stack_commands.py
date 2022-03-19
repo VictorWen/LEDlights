@@ -128,6 +128,21 @@ def gradient3(state, nargs, args):
     state.last_command_result = ColorAdapter(Gradient3ColorSelector(color1, color2, color3))
 
 
+def ngradient(state, nargs, args):
+    if (nargs < 2):
+        state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
+        return
+
+    colors = args[1].strip().split()
+    for i in range(len(colors)):
+        color = colorname_to_color(colors[i])
+        if (color is None):
+            return
+        colors[i] = color
+    
+    state.last_command_result = ColorAdapter(NGradientColorSelector(colors))
+
+
 def split(state, nargs, args):
     if (nargs < 2):
         state.send(f"Format: {args[0]} COLOR1 COLOR2")
@@ -162,6 +177,21 @@ def split3(state, nargs, args):
         return
     
     state.last_command_result = ColorAdapter(Split3ColorSelector(color1, color2, color3))
+
+
+def nsplit(state, nargs, args):
+    if (nargs < 2):
+        state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
+        return
+
+    colors = args[1].strip().split()
+    for i in range(len(colors)):
+        color = colorname_to_color(colors[i])
+        if (color is None):
+            return
+        colors[i] = color
+    
+    state.last_command_result = ColorAdapter(NSplitColorSelector(colors))
 
 
 def rainbow(state, nargs, args):
@@ -405,8 +435,10 @@ commands = [
     Command("fill", fill, "EFFECT", 1),
     Command("gradient", gradient, "EFFECT", 2),
     Command("gradient3", gradient3, "EFFECT", 3),
+    Command("ngradient", ngradient, "EFFECT", 1),
     Command("split", split, "EFFECT", 2),
     Command("split3", split3, "EFFECT", 3),
+    Command("nsplit", nsplit, "EFFECT", 1),
     Command("rainbow", rainbow, "EFFECT", 0),
     Command("redgreenblue", redgreenblue, "EFFECT", 0),
     Command("rgb", rgb, "EFFECT", 3),

@@ -55,6 +55,7 @@ class StackCommandLineInterpreter:
             else:
                 if command.cmd_type != "EFFECT":
                     self.state.send("Invalid EFFECT command in stacked command")
+                    return None
                 command_stack.append(command)
             i -= 1
         
@@ -81,7 +82,30 @@ class StackCommandLineInterpreter:
         self.running = True
         while self.running:
             input_str = await ainput("Input command:")
-            args = input_str.strip().split()
+            words = input_str.strip().split()
+            args = []
+            
+            i = 0
+            while i < len(words):
+                word = words[i]
+                if (word.startswith("\"")):
+                    end = 0
+                    if (len(word) > 1 and word.endswith("\"")):
+                        end = i
+                    else:
+                        end = i + 1
+                        while end < len(words) and not words[end].endswith("\""):
+                            end += 1
+                        if end == len(words):
+                            self.state.send("Unmatched \"")
+                            args = []
+                            break
+                    word = " ".join(words[i:end+1])
+                    word = word[1:len(word) - 1]
+                    i = end
+                args.append(word)
+                i += 1
+
             nargs = len(args)
             if (nargs > 0):
                 if (args[0] == "exit"):

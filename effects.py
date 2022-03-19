@@ -108,17 +108,22 @@ class ColorWipe(BaseEffect):
         self.color = color
         self.time_length = time_length
         self.time_sum = 0
+        self.original = None
 
     def tick(self, pixels, time_delta):
-        colors = clone_pixels(pixels)
+        if self.original is None:
+            self.original = clone_pixels(pixels)
+        colors = clone_pixels(self.original)
         self.color.tick(colors, time_delta)
         n = len(pixels)
         
-        i = 0
+        cutoff = self.time_sum / self.time_length * n
         self.time_sum += time_delta
-        while (self.time_sum / self.time_length * n >= i and i < n):
-            pixels[i] = colors[i]
-            i += 1
+        for i in range(n):
+            if cutoff >= i:
+                pixels[i] = colors[i]
+            else:
+                pixels[i] = self.original[i]
         
 
 class FadeIn(BaseEffect):
@@ -241,8 +246,9 @@ class SlidingEffect(BaseEffect):
 
     def tick(self, pixels, time_delta):
         n = len(pixels)
-        prev_offset = int((self.time_sum / self.period) * n)
-        colors = [pixels[(i + prev_offset) % n] for i in range(n)]
+        # prev_offset = int((self.time_sum / self.period) * n)
+        # colors = [pixels[(i + prev_offset) % n] for i in range(n)]
+        colors = clone_pixels(pixels)
         self.color.tick(colors, time_delta)
         
         self.time_sum += time_delta
