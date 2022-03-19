@@ -6,8 +6,9 @@ import os
 import board
 import neopixel
 from pythonCLI import *
-from commands import commands, State
-from colors import RainbowColorSelector
+# from commands import commands, State
+from stack_commands import commands, State
+from colors import *
 import sys
 import wave
 import numpy as np
@@ -21,10 +22,11 @@ async def main():
 
     pixel_control = NeoPixelController(pixels, tps=50)
     state = State(pixel_control, pixels)
-    cli = CommandLineInterpreter(commands, state)
+    cli = StackCommandLineInterpreter(commands, state)
 
     task = asyncio.create_task(pixel_control.run())
-    pixel_control.set_effect(BlinkEffect(ColorWipe(ColorAdapter(RainbowColorSelector()), 5), 0.1))
+    pixel_control.set_effect(SlidingEffect(ColorWipe(ColorAdapter(RainbowColorSelector()), 10), 10))
+
 
     asyncio.create_task(cli.run())
 

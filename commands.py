@@ -220,7 +220,7 @@ def fade_in(state, nargs, args):
     if (time is None):
         state.send(f'Error {args[-1]} is not a valid time')
         return
-    state.controller.set_effect(FadeIn(color, time))
+    state.controller.set_effect(FadeIn(ColorAdapter(color), time))
 
 def fade_out(state, nargs, args):
     if (nargs < 3):
@@ -241,7 +241,7 @@ def fade_out(state, nargs, args):
     if (time is None):
         state.send(f'Error {args[-1]} is not a valid time')
         return
-    state.controller.set_effect(FadeOut(color, time))
+    state.controller.set_effect(FadeOut(ColorAdapter(color), time))
 
 def fade_out(state, nargs, args):
     if (nargs < 3):
