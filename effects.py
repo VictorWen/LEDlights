@@ -1,5 +1,6 @@
 import math
 from colors import ColorSelector
+from color_utils import *
 
 STATIC = 'static'
 DYNAMIC = 'dynamic'
@@ -30,24 +31,6 @@ def fill_select(pixels, selector):
     for i in range(n):
         pixels[i] = selector.get_color(i/n)
     pixels.show()
-
-
-def clone_pixels(pixels):
-    return list(pixels[i] for i in range(len(pixels)))
-
-
-def set_pixels(pixels, colors):
-    for i in range(len(pixels)):
-        pixels[i] = colors[i]
-
-
-def scalar_mult(scalar, color):
-    return tuple(int(scalar * color[i]) for i in range(3))
-
-
-def scalar_mult_fill(scalar, pixels):
-    for i in range(len(pixels)):
-        pixels[i] = scalar_mult(scalar, pixels[i])
 
 
 class BaseEffect:

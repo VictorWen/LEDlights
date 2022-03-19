@@ -24,7 +24,8 @@ colors = {
     "AQUA": (0, 64, 255),
     "INDIGO": (64, 0, 255),
     "LIGHT_BLUE": (64, 64, 255),
-    "CLEAR": (0, 0, 0),
+    "BLACK": (0, 0, 0),
+    "CLEAR": (-1, -1, -1),
 }
 
 def colorname_to_color(colorname):
@@ -429,6 +430,50 @@ def get_colors(state, nargs, args):
     for color in colors.keys():
         value += color + "\n"
     state.send(value)
+
+def add_layer(state, nargs, args):
+    state.controller.add_layer()
+    state.send(f"Added new layer ({state.controller.num_layers()})")
+    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
+def get_layer(state, nargs, args):
+    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
+def set_layer(state, nargs, args):
+    if (nargs < 2):
+        state.send(f"Format: {args[0]} INDEX")
+        return
+    
+    index = 0
+    try:
+        index = int(args[1])
+    except:
+        state.send(f"Error: {args[1]} is not a valid INDEX")
+        return
+
+    state.controller.set_layer(index)
+    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
+def clear_layer(state, nargs, args):
+    state.controller.clear_layer()
+    state.send(f"Cleared layer index {state.controller.current_layer()}")
+
+def delete_layer(state, nargs, args):
+    old = state.controller.current_layer()
+    state.controller.delete_layer()
+    state.send(f"Deleted layer index {old}")
+    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
+def change_merge(state, nargs, args):
+    if nargs < 2:
+        state.send(f"Format: {args[0]} BEHAVIOR")
+        return
+    
+    valid = state.controller.change_merge_behavior(args[1])
+    if not valid:
+        state.send(f"Error: {args[1]} is not a valid BEHAVIOR")
+    else:
+        state.send(f"Changed merge behavior to {args[1]}")
     
 
 commands = [
@@ -454,10 +499,17 @@ commands = [
     Command("wipe", wipe, "EFFECT", 2),
     Command("slide", slide, "EFFECT", 2),
 
-    Command("brightness", brightness, "CONTROL", 1),
+    Command("brightness", brightness, n_args=1),
     Command("pause", pause),
     Command("resume", resume),
     Command("exit", stop),
     Command("restart", restart),
     Command("colors", get_colors),
+
+    Command("addlayer", add_layer),
+    Command("getlayer", get_layer),
+    Command("setlayer", set_layer, n_args=1),
+    Command("clearlayer", clear_layer),
+    Command("deletelayer", delete_layer),
+    Command("changemerge", change_merge, n_args=1)
 ]
