@@ -1,0 +1,7 @@
+resetlayers
+slide rainbow 3
+addlayer
+slide rainbow 15
+addlayer
+slide rainbow 30
+changemerge BLEND

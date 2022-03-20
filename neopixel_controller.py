@@ -24,7 +24,6 @@ def merge_layers(layers, merge_behavior="OVERWRITE"):
 
 
 class NeoPixelController:
-    
     def __init__(self, pixels, tps=20):
         self.delay = 1/tps
         self.paused = False
@@ -82,6 +81,11 @@ class NeoPixelController:
     def clear_layer(self):
         self.layers[self.layer_index] = [(-1, -1, -1) for i in range(self.N)]
         self.effects[self.layer_index] = None
+    
+    def reset_layers(self):
+        self.layers = [[(-1, -1, -1) for i in range(self.N)]]
+        self.effects = [None]
+        self.layer_index = 0
 
     def set_layer(self, layer_index):
         self.layer_index = layer_index

@@ -458,6 +458,10 @@ def clear_layer(state, nargs, args):
     state.controller.clear_layer()
     state.send(f"Cleared layer index {state.controller.current_layer()}")
 
+def reset_layers(state, nargs, args):
+    state.controller.reset_layers()
+    state.send(f"Reset layers")
+
 def delete_layer(state, nargs, args):
     old = state.controller.current_layer()
     state.controller.delete_layer()
@@ -510,6 +514,7 @@ commands = [
     Command("getlayer", get_layer),
     Command("setlayer", set_layer, n_args=1),
     Command("clearlayer", clear_layer),
+    Command("resetlayers", reset_layers),
     Command("deletelayer", delete_layer),
     Command("changemerge", change_merge, n_args=1)
 ]

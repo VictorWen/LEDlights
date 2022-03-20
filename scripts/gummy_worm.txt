@@ -1,0 +1,5 @@
+resetlayers
+wave rainbow 5 150
+addlayer
+wave rainbow -5 150
+changemerge ADD

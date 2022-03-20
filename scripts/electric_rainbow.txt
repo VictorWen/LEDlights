@@ -1,0 +1,5 @@
+resetlayers
+changemerge ADD
+rainbow
+addlayer
+slide colorwipe rainbow 30 1

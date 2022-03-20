@@ -80,8 +80,22 @@ class StackCommandLineInterpreter:
 
     async def run(self):
         self.running = True
+        queue = []
+        queueing = False
+
         while self.running:
-            input_str = await ainput("Input command:")
+            if queueing:
+                input_str = await ainput(f"[{len(queue)}] ")
+                if input_str == "\n":
+                    queueing = False
+                else:
+                    queue.append(input_str)
+                    continue
+            elif len(queue) > 0:
+                input_str = queue.pop(0)            
+            else:
+                input_str = await ainput("Input command:")
+
             words = input_str.strip().split()
             args = []
             
@@ -108,6 +122,34 @@ class StackCommandLineInterpreter:
 
             nargs = len(args)
             if (nargs > 0):
+                if (args[0] == "wait"):
+                    if (nargs < 2):
+                        self.state.send("wait takes one argument: TIME")
+                        continue
+                    if (len(queue) <= 0):
+                        self.state.send("wait can only be used before another command")
+                        continue
+                    try:
+                        time = float(args[1])
+                    except:
+                        self.state.send(f"Error: {args[1]} is not a valid TIME")
+                        continue
+                    await asyncio.sleep(time)
+                    continue
+                if (args[0] == "read"):
+                    if (nargs < 2):
+                        self.state.send("read takes one argument: FILENAME")
+                        continue
+                    filename = args[1]
+                    try:
+                        with open(filename, 'r') as file:
+                            queue.extend(file.readlines())
+                    except:
+                        self.state.send("Invalid file")
+                    continue
+                if (args[0] == "do"):
+                    queueing = True
+                    continue
                 if (args[0] == "exit"):
                     self.running = False
 

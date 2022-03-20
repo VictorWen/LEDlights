@@ -1,0 +1,4 @@
+resetlayers
+slide colorwipe rainbow 30 1
+wait 30
+blinkfade slide rainbow 1 1

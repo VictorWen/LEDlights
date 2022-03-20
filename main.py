@@ -28,9 +28,7 @@ async def main():
     pixel_control.set_effect(SlidingEffect(ColorWipe(ColorAdapter(RainbowColorSelector()), 10), 10))
 
 
-    asyncio.create_task(cli.run())
-
-    await task
+    await asyncio.create_task(cli.run())
 
 # dc.client.loop.create_task(main())
 # dc.start()

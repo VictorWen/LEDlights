@@ -2,11 +2,14 @@ import math
 from colors import ColorSelector
 from color_utils import *
 
+
 STATIC = 'static'
 DYNAMIC = 'dynamic'
 
+
 def gradient(color1, color2, value):
     return tuple(int(color1[i] + (color2[i] - color1[i]) * value) for i in range(3))
+
 
 def rainbow(value):
     value *= 3
@@ -17,6 +20,7 @@ def rainbow(value):
     elif (value % 3 < 3):
         return (int(255 * (value - 2)), 0, int(255 * (3 - value)))
 
+
 def RGB(value):
     value *= 2
     if (value == 2):
@@ -25,6 +29,7 @@ def RGB(value):
         return (int(255 * (1 - (value % 1))), int(255 * (value % 1)), 0)
     elif (value % 2 < 2):
         return (0, int(255 * (2 - value)), int(255 * (value - 1)))
+
 
 def fill_select(pixels, selector):
     n = len(pixels)
@@ -102,12 +107,19 @@ class ColorWipe(BaseEffect):
         
         cutoff = self.time_sum / self.time_length * n
         self.time_sum += time_delta
-        for i in range(n):
-            if cutoff >= i:
-                pixels[i] = colors[i]
-            else:
-                pixels[i] = self.original[i]
-        
+        if (self.time_length > 0):
+            for i in range(n):
+                if cutoff >= i:
+                    pixels[i] = colors[i]
+                else:
+                    pixels[i] = self.original[i]
+        else:
+            for i in range(-1, -(n + 1), -1):
+                if cutoff - 1 <= i:
+                    pixels[i] = colors[i]
+                else:
+                    pixels[i] = self.original[i]
+
 
 class FadeIn(BaseEffect):
     def __init__(self, color, time_length):
