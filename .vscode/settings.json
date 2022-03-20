@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
         "//victorwen-raspberrypi.local/pishare/Repos/LEDlights",
+		 "//victorwen-raspberrypi4.local//pishare/Documents/LEDlights"
     ]
 }
