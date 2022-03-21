@@ -42,36 +42,39 @@ class StackCommandLineInterpreter:
 
     
     def parse_stack_command(self, command, args):
-        command_stack = []
         argument_stack = []
-
         n = len(args)
         i = n - 1
         while i >= 0:
             arg = args[i]
             command = self.get_command(arg)
             if command is None:
+                if arg == "[":
+                    list_values = []
+                    while (len(list_values) == 0 or list_values[-1] != "]") and len(argument_stack) > 0:
+                        list_values.append(argument_stack.pop(-1))
+                    if len(list_values) == 0 or list_values[-1] != "]":
+                        self.state.send("Unmatched '['")
+                        return None
+                    arg = list_values[0:len(list_values) - 1]
                 argument_stack.append(arg)
             else:
                 if command.cmd_type != "EFFECT":
                     self.state.send("Invalid EFFECT command in stacked command")
                     return None
-                command_stack.append(command)
+                self.state.last_command_result = None
+
+                m = len(argument_stack)
+                cmd_args = [command.name]
+                for x in range(min(command.n_args, m)):
+                    cmd_args.append(argument_stack.pop(-1))
+                n_args = len(cmd_args)
+                
+                command.run(self.state, n_args, cmd_args)
+                if self.state.last_command_result is None:
+                    return None
+                argument_stack.append(self.state.last_command_result)
             i -= 1
-        
-        while len(command_stack) > 0:
-            self.state.last_command_result = None
-            command = command_stack.pop(0)
-            m = len(argument_stack)
-            args = [command.name]
-            for i in range(min(command.n_args, m)):
-                args.append(argument_stack.pop(-1))
-            n_args = len(args)
-            
-            command.run(self.state, n_args, args)
-            if self.state.last_command_result is None:
-                return None
-            argument_stack.append(self.state.last_command_result)
         
         if len(argument_stack) < 1:
             return None
@@ -96,6 +99,21 @@ class StackCommandLineInterpreter:
             else:
                 input_str = await ainput("Input command:")
 
+            input_str = input_str.replace("[", " [ ").replace("]", " ] ")
+            brackets = 0
+            for c in input_str:
+                if c == "[":
+                    brackets += 1
+                if c == "]":
+                    brackets -= 1
+            if brackets < 0:
+                self.state.send("Unmatched ']'")
+                continue
+            if brackets > 0:
+                self.state.send("Unmatched '['")
+                continue
+
+            # print(input_str)
             words = input_str.strip().split()
             args = []
             
@@ -111,7 +129,7 @@ class StackCommandLineInterpreter:
                         while end < len(words) and not words[end].endswith("\""):
                             end += 1
                         if end == len(words):
-                            self.state.send("Unmatched \"")
+                            self.state.send("Unmatched '\"'")
                             args = []
                             break
                     word = " ".join(words[i:end+1])
@@ -143,7 +161,9 @@ class StackCommandLineInterpreter:
                     filename = args[1]
                     try:
                         with open(filename, 'r') as file:
-                            queue.extend(file.readlines())
+                            old_queue = queue
+                            queue = file.readlines()
+                            queue.extend(old_queue)
                     except:
                         self.state.send("Invalid file")
                     continue

@@ -109,8 +109,8 @@ class NeoPixelController:
             if (self.paused):
                 timer = datetime.datetime.now()
                 continue
-
-            time_delta = datetime.datetime.now() - timer
+            
+            prev_timer = timer
             timer = datetime.datetime.now()
             for i in range(self.num_layers()):
                 layer = self.layers[i]
@@ -124,6 +124,7 @@ class NeoPixelController:
                     self.effects[i] = None
                 
                 elif (effect.type == DYNAMIC):
+                    time_delta = datetime.datetime.now() - prev_timer
                     effect.tick(layer, time_delta.total_seconds())
 
             colors = merge_layers(self.layers, self.merge_behavior)

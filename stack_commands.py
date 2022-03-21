@@ -2,6 +2,7 @@ from effects import *
 from colors import *
 from fft_effect import FFTEffect
 import asyncio
+from music_effects import PlayMusic
 from neopixel_controller import *
 import board
 import neopixel
@@ -29,8 +30,11 @@ colors = {
 }
 
 def colorname_to_color(colorname):
-    if colorname in colors:
-        return colors[colorname]
+    try:
+        if colorname in colors:
+            return colors[colorname]
+    except:
+        pass
     print(f"Error: {colorname} is not a valid COLOR")
     return None
 
@@ -133,8 +137,15 @@ def ngradient(state, nargs, args):
     if (nargs < 2):
         state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
         return
-
-    colors = args[1].strip().split()
+    
+    if isinstance(args[1], str):
+        colors = args[1].strip().split()
+    elif isinstance(args[1], list):
+        colors = args[1]
+    else:
+        state.send(f"Invalid COLOR list {args[1]}")
+        return
+    
     for i in range(len(colors)):
         color = colorname_to_color(colors[i])
         if (color is None):
@@ -142,6 +153,39 @@ def ngradient(state, nargs, args):
         colors[i] = color
     
     state.last_command_result = ColorAdapter(NGradientColorSelector(colors))
+
+
+def dgradient(state, nargs, args):
+    if nargs < 3:
+        state.send(f"Format: {args[0]} [EFFECT(1) EFFECT(2) ... EFFECT(N)] [WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]")
+        return
+    
+    if isinstance(args[1], list):
+        for effect in args[1]:
+            if not isinstance(effect, BaseEffect):
+                state.send(f"Invalid EFFECT {effect}")
+                return    
+    elif not isinstance(args[1], BaseEffect):
+        state.send(f"Invalid EFFECT list {args[1]}")
+        return
+    
+    if isinstance(args[2], list):
+        weights = []
+        for weight in args[2]:
+            try:
+                weights.append(int(weight))
+            except:
+                state.send(f"Invalid WEIGHT {weight}")
+    elif isinstance(args[2], str):
+        try:
+            weights = int(args[2])
+        except:
+            state.send(f"Invalid WEIGHT {args[2]}")
+    else:
+        state.send(f"Invalid WEIGHT list {args[2]}")
+        return
+
+    state.last_command_result = DynamicGradient(args[1], weights)
 
 
 def split(state, nargs, args):
@@ -185,14 +229,38 @@ def nsplit(state, nargs, args):
         state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
         return
 
-    colors = args[1].strip().split()
+    if isinstance(args[1], str):
+        colors = args[1].strip().split()
+    elif isinstance(args[1], list):
+        colors = args[1]
+    else:
+        state.send(f"Invalid COLOR list {args[1]}")
+        return
+    
     for i in range(len(colors)):
         color = colorname_to_color(colors[i])
         if (color is None):
             return
         colors[i] = color
-    
+
     state.last_command_result = ColorAdapter(NSplitColorSelector(colors))
+
+
+def dsplit(state, nargs, args):
+    if nargs < 2:
+        state.send(f"Format: {args[0]} [EFFECT(1) EFFECT(2) ... EFFECT(N)]")
+        return
+    
+    if isinstance(args[1], list):
+        for effect in args[1]:
+            if not isinstance(effect, BaseEffect):
+                state.send(f"Invalid EFFECT {effect}")
+                return    
+    elif not isinstance(args[1], BaseEffect):
+        state.send(f"Invalid EFFECT list {args[1]}")
+        return
+
+    state.last_command_result = DynamicSplit(args[1])
 
 
 def rainbow(state, nargs, args):
@@ -205,6 +273,7 @@ def redgreenblue(state, nargs, args):
 def rgb(state, nargs, args):
     if (nargs < 4):
         state.send(f"Format: {args[0]} R G B")
+        return
     
     rgb = parse_rgb_color(args[1], args[2], args[3])
     if (rgb is None):
@@ -216,6 +285,7 @@ def rgb(state, nargs, args):
 def hex(state, nargs, args):
     if (nargs < 2):
         state.send(f"Format: {args[0]} HEX")
+        return
     rgb = hexstring_to_rgb(args[1])
     if (rgb is None):
         state.send(f"Error: {args[1]} is not a valid hex color")
@@ -389,6 +459,15 @@ def slide(state, nargs, args):
 #     file = " ".join(args[1:])
 #     state.controller.set_effect(FFTEffect(file))
 
+def play_music(state, nargs, args):
+    if nargs < 2:
+        state.send(f"Format: {args[0]} FILENAME")
+        return
+
+    file = args[1]
+
+    state.last_command_result = PlayMusic(file)
+
 def brightness(state, nargs, args):
     if (nargs == 2):
         try: brightness = float(args[1])
@@ -485,9 +564,11 @@ commands = [
     Command("gradient", gradient, "EFFECT", 2),
     Command("gradient3", gradient3, "EFFECT", 3),
     Command("ngradient", ngradient, "EFFECT", 1),
+    Command("dgradient", dgradient, "EFFECT", 2),
     Command("split", split, "EFFECT", 2),
     Command("split3", split3, "EFFECT", 3),
     Command("nsplit", nsplit, "EFFECT", 1),
+    Command("dsplit", dsplit, "EFFECT", 1),
     Command("rainbow", rainbow, "EFFECT", 0),
     Command("redgreenblue", redgreenblue, "EFFECT", 0),
     Command("rgb", rgb, "EFFECT", 3),
@@ -502,6 +583,8 @@ commands = [
     Command("wheel", wheel, "EFFECT", 2),
     Command("wipe", wipe, "EFFECT", 2),
     Command("slide", slide, "EFFECT", 2),
+
+    Command("playmusic", play_music, "EFFECT", 1),
 
     Command("brightness", brightness, n_args=1),
     Command("pause", pause),

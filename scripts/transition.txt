@@ -1,0 +1,3 @@
+resetlayers
+fadeout wipe gradient RED BLUE 5 5
+wait 5

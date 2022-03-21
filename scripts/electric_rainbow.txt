@@ -1,5 +1,5 @@
 resetlayers
 changemerge ADD
-rainbow
+blinkfade rainbow 2
 addlayer
 slide colorwipe rainbow 30 1

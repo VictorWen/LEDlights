@@ -1,7 +1,10 @@
 resetlayers
-slide rainbow 3
-addlayer
-slide rainbow 15
-addlayer
-slide rainbow 30
 changemerge BLEND
+
+fadein slide rainbow 3 10
+wait 15
+addlayer
+fadein blinkfade wave gradient BLUE CLEAR 5 15 2 10
+wait 15
+addlayer
+fadein wave gradient PINK CLEAR -7 50 10

@@ -1,0 +1,3 @@
+read scripts/light_show.txt
+wait 30
+read scripts/infinite_light.txt

@@ -1,5 +1,4 @@
 import math
-from colors import ColorSelector
 from color_utils import *
 
 
@@ -64,6 +63,85 @@ class FillEffect(BaseEffect):
     
     def tick(self, pixels, time_delta):
         self.color.tick(pixels, time_delta)
+
+
+class DynamicSplit(BaseEffect):
+    def __init__(self, color_effects):
+        super().__init__()
+        if isinstance(color_effects, list):
+            self.effects = color_effects
+        else:
+            self.effects = [color_effects]
+        self.n = len(self.effects)
+        self.portion = 1/self.n
+    
+    def tick(self, pixels, time_delta):
+        N = len(pixels)
+
+        colors = []
+        for i in range(self.n):
+            color = clone_pixels(pixels)
+            self.effects[i].tick(color, time_delta)
+            colors.append(color)
+
+        for i in range(N):
+            value = i / N
+            if value == 0:
+                pixels[i] = colors[0][i]
+            else:
+                check = 1 - self.portion
+                j = self.n - 1
+                while value <= check:
+                    check -= self.portion
+                    j -= 1
+                pixels[i] =  colors[j][i]
+
+
+class DynamicGradient(BaseEffect):
+    def __init__(self, color_effects, sampling_weights=-1):
+        super().__init__()
+        if isinstance(color_effects, list):
+            self.effects = color_effects
+        else:
+            self.effects = [color_effects]
+        
+        if sampling_weights == -1:
+            self.weights = [1 for effect in self.effects]
+        elif isinstance(sampling_weights, list):
+            self.weights = sampling_weights
+        else:
+            self.weights = [sampling_weights]
+    
+    def tick(self, pixels, time_delta):
+        N = len(pixels)
+
+        colors = []
+        differences = []
+        for i in range(len(self.effects)):
+            color = clone_pixels(pixels)
+            self.effects[i].tick(color, time_delta)
+            weight = self.weights[i]
+            for j in range(weight):
+                pixel = color[int(j/weight * N)]
+                if len(colors) > 0:
+                    differences.append(tuple(int(pixel[j] - colors[-1][j]) for j in range(3)))
+                colors.append(pixel)
+
+        n = len(colors)
+
+        for i in range(N):
+            value = i / N
+            if n == 1:
+                pixels[i] = colors[0]
+            elif value == 0:
+                pixels[i] = colors[0]
+            else:
+                value *= (n - 1)
+                j = n - 1
+                while value <= j:
+                    j -= 1
+                pixels[i] = tuple(int(colors[j][k] + (value - j) * differences[j][k]) for k in range(3))
+        
 
 
 class BlinkEffect(BaseEffect):
@@ -165,7 +243,7 @@ class BlinkFade(BaseEffect):
         self.color.tick(colors, time_delta)
         
         self.time_sum += time_delta
-        scalar_mult_fill((math.cos(self.time_sum/self.time_length * math.pi) + 1) / 2, colors)
+        scalar_mult_fill((math.sin(self.time_sum/self.time_length * math.pi) + 1) / 2, colors)
         set_pixels(pixels, colors)
 
 
@@ -186,7 +264,7 @@ class WaveEffect(BaseEffect):
         n = len(colors)
         for i in range(n):
             phase = (i/self.wavelength - self.time_sum/self.period) * 2 * math.pi
-            value = (1 + math.cos(phase)) / 2
+            value = (1 + math.sin(phase)) / 2
             pixels[i] = colors[int(value * (n - 1))]
 
 
@@ -204,7 +282,7 @@ class WheelEffect(BaseEffect):
 
         self.time_sum += time_delta
         phase = (self.time_sum/self.period) * 2 * math.pi
-        value = (1 + math.cos(phase)) / 2
+        value = (1 + math.sin(phase)) / 2
         
         n = len(colors)
         for i in range(n):
@@ -221,8 +299,7 @@ class WipeEffect(BaseEffect):
 
     def tick(self, pixels, time_delta):
         n = len(pixels)
-        prev_offset = int((self.time_sum / self.period) * n)
-        colors = [pixels[prev_offset % n] for i in range(n)]
+        colors = clone_pixels(pixels)
         self.color.tick(colors, time_delta)
         
         self.time_sum += time_delta
@@ -252,26 +329,6 @@ class SlidingEffect(BaseEffect):
             pixels[i] = colors[(i - offset) % n]
 
 
-class FadeEffect(BaseEffect):
-    def __init__(self, color, period):
-        super().__init__(type=DYNAMIC)
-        self.color = color
-        self.period = period
-
-        self.time_sum = 0
-
-    def tick(self, pixels, time_delta):
-        n = len(pixels)
-        prev_offset = int((self.time_sum / self.period) * n)
-        colors = [pixels[(i + prev_offset) % n] for i in range(n)]
-        self.color.tick(colors, time_delta)
-        
-        self.time_sum += time_delta
-        offset = int((self.time_sum / self.period) * n)
-        for i in range(n):
-            pixels[i] = colors[(i - offset) % n]
-
-
 class Wave(BaseEffect):
     def __init__(self, color1, color2, time_length, length):
         super().__init__(type=DYNAMIC)
@@ -285,7 +342,7 @@ class Wave(BaseEffect):
     def tick(self, pixels, time_delta):
         self.time_sum += time_delta
         for i in range(len(pixels)):
-            value = (math.cos((i / self.length - self.time_sum/self.time_length) * math.pi) + 1) / 2
+            value = (math.sin((i / self.length - self.time_sum/self.time_length) * math.pi) + 1) / 2
             color = tuple(int(self.color1[j] + value * self.color_diff[j]) for j in range(3))
             pixels[i] = color
 
@@ -300,6 +357,6 @@ class RainbowWave(BaseEffect):
     def tick(self, pixels, time_delta):
         self.time_sum += time_delta
         for i in range(len(pixels)):
-            value = (math.cos((i / self.length - self.time_sum/self.time_length) * math.pi) + 1) / 2
+            value = (math.sin((i / self.length - self.time_sum/self.time_length) * math.pi) + 1) / 2
             color = rainbow(value)
             pixels[i] = color

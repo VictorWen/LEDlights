@@ -18,7 +18,7 @@ async def main():
     n = 150
     if (len(sys.argv) > 1):
         n = int(sys.argv[1])
-    pixels = neopixel.NeoPixel(board.D18, n, brightness=0.35, auto_write=False)
+    pixels = neopixel.NeoPixel(board.D10, n, brightness=0.35, auto_write=False)
 
     pixel_control = NeoPixelController(pixels, tps=50)
     state = State(pixel_control, pixels)

@@ -1,0 +1,8 @@
+resetlayers
+slide colorwipe fill BLUE 10 5
+wait 15
+slide colorwipe fill RED 15 -1
+wait 15
+fadeout blink wipe split RED BLUE 1 0.1 5
+wait 6
+fadein fill PURPLE 5
