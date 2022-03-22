@@ -113,7 +113,6 @@ class StackCommandLineInterpreter:
                 self.state.send("Unmatched '['")
                 continue
 
-            # print(input_str)
             words = input_str.strip().split()
             args = []
             

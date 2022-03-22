@@ -2,10 +2,13 @@ from effects import *
 from colors import *
 from fft_effect import FFTEffect
 import asyncio
-from music_effects import PlayMusic
+from music_effects import PlayMusic, SpectrumEffect
 from neopixel_controller import *
 import board
 import neopixel
+import wave as wav
+import pafy
+import ffmpeg
 
 colors = {
     "RED": (255, 0 ,0),
@@ -71,6 +74,7 @@ class State:
         self.pixels = pixels
         self.send = send
         self.last_command_result = None
+        self.playback = None
 
 class Command:
     def __init__(self, name, call, cmd_type="CONTROL", n_args=0):
@@ -176,11 +180,13 @@ def dgradient(state, nargs, args):
                 weights.append(int(weight))
             except:
                 state.send(f"Invalid WEIGHT {weight}")
+                return
     elif isinstance(args[2], str):
         try:
             weights = int(args[2])
         except:
             state.send(f"Invalid WEIGHT {args[2]}")
+            return
     else:
         state.send(f"Invalid WEIGHT list {args[2]}")
         return
@@ -465,8 +471,97 @@ def play_music(state, nargs, args):
         return
 
     file = args[1]
+    if file.startswith("https://"):
+        try:
+            yt = pafy.new(file)
+            audio_stream = yt.getbestaudio().url_https
+            
+            node_input = ffmpeg.input(audio_stream)
+            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            process = node_output.run_async(pipe_stdout=True)
+            wavfile = wav.open(process.stdout, 'rb')
+        except BaseException as error:
+            print(error)
+            state.send(f"Error loading {file} from youtube")
+            return
+    else:
+        try:
+            wavfile = wav.open(file, 'rb')
+        except:
+            state.send(f"Error {file} is not a valid FILENAME")
+            return
 
-    state.last_command_result = PlayMusic(file)
+    state.last_command_result = PlayMusic(wavfile)
+
+def spectrum(state, nargs, args):
+    if nargs < 3:
+        state.send(f"Format: {args[0]} EFFECT FILENAME")
+        return
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        state.send(f'Error {args[1]} is not a valid EFFECT')
+        return
+
+    file = args[2]
+    if file.startswith("https://"):
+        try:
+            yt = pafy.new(file)
+            audio_stream = yt.getbestaudio().url_https
+            
+            node_input = ffmpeg.input(audio_stream)
+            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            process = node_output.run_async(pipe_stdout=True)
+            wavfile = wav.open(process.stdout, 'rb')
+        except BaseException as error:
+            print(error)
+            state.send(f"Error loading {file} from youtube")
+            return
+    else:
+        try:
+            wavfile = wav.open(file, 'rb')
+        except:
+            state.send(f"Error {file} is not a valid FILENAME")
+            return
+
+    state.last_command_result = SpectrumEffect(effect, wavfile, state.playback)
+
+def piano(state, nargs, args):
+    if nargs < 3:
+        state.send(f"Format: {args[0]} EFFECT FILENAME")
+        return
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        state.send(f'Error {args[1]} is not a valid EFFECT')
+        return
+
+    file = args[2]
+    if file.startswith("https://"):
+        try:
+            yt = pafy.new(file)
+            audio_stream = yt.getbestaudio().url_https
+            
+            node_input = ffmpeg.input(audio_stream)
+            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            process = node_output.run_async(pipe_stdout=True)
+            wavfile = wav.open(process.stdout, 'rb')
+        except BaseException as error:
+            print(error)
+            state.send(f"Error loading {file} from youtube")
+            return
+    else:
+        try:
+            wavfile = wav.open(file, 'rb')
+        except:
+            state.send(f"Error {file} is not a valid FILENAME")
+            return
+
+    state.last_command_result = SpectrumEffect(effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
+
 
 def brightness(state, nargs, args):
     if (nargs == 2):
@@ -585,6 +680,8 @@ commands = [
     Command("slide", slide, "EFFECT", 2),
 
     Command("playmusic", play_music, "EFFECT", 1),
+    Command("spectrum", spectrum, "EFFECT", 2),
+    Command("piano", piano, "EFFECT", 2),
 
     Command("brightness", brightness, n_args=1),
     Command("pause", pause),

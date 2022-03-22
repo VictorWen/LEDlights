@@ -17,3 +17,6 @@ def add_colors(color1, color2):
 
 def blend_colors(color1, color2):
     return tuple(int(min(255, max(0, (color1[i] + color2[i]) / 2))) for i in range(3))
+
+def multiply_colors(color1, color2):
+    return tuple(int(min(255, max(0, color1[i] * color2[i] / 255))) for i in range(3))

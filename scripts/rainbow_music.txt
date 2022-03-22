@@ -1,0 +1,3 @@
+slide rainbow 1
+addlayer
+changemerge MULTIPLY

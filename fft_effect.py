@@ -3,7 +3,6 @@ import wave
 import numpy as np
 from numpy.fft import rfft, rfftfreq
 from scipy.fftpack import next_fast_len
-import audioop
 # import discord_comms as dc
 
 def scale_freq(ints, freqs, offset, cap, N, bins):

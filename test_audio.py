@@ -2,14 +2,24 @@ import pyaudio
 import wave
 import sys
 import time
+import pafy
+import ffmpeg
 
-CHUNK = 1024
+URL = "https://www.youtube.com/watch?v=ZavjGCQ95xI"
 
-def callback(in_data, frame_count, time_info, status):
-    data = wf.readframes(frame_count)
-    return (data, pyaudio.paContinue)
+yt = pafy.new(URL)
+audio_stream = yt.getbestaudio().url_https
 
-with wave.open('The Rumbling.wav', 'rb') as wf:
+node_input = ffmpeg.input(audio_stream)
+node_output = node_input.output('pipe:', acodec="pcm_s16le", f="wav")
+process = node_output.run_async(pipe_stdout=True)
+
+
+with wave.open(process.stdout, 'rb') as wf:
+    def callback(in_data, frame_count, time_info, status):
+        data = wf.readframes(frame_count)
+        return (data, pyaudio.paContinue)
+
     p = pyaudio.PyAudio()
 
     # open stream using callback (3)

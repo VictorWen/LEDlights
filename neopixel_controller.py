@@ -1,15 +1,19 @@
 import asyncio
 from asyncio.tasks import wait
-from audioop import add
-from pickle import NONE
+from color_utils import multiply_colors
 from effects import STATIC, DYNAMIC, BaseEffect
 import datetime
 from color_utils import *
 
 
 def merge_layers(layers, merge_behavior="OVERWRITE"):
-    result = [(0, 0, 0) for i in range(len(layers[0]))]
-    for i in range(len(layers)):
+    result = [layers[0][i] for i in range(len(layers[0]))]
+
+    for i in range(len(layers[0])):
+        if layers[0][i] == (-1, -1, -1):
+            result[i] = (0, 0, 0)
+    
+    for i in range(1, len(layers)):
         layer = layers[i]
         for j in range(len(layer)):
             if layer[j] == (-1, -1, -1):
@@ -20,6 +24,11 @@ def merge_layers(layers, merge_behavior="OVERWRITE"):
                 result[j] = add_colors(result[j], layer[j])
             elif merge_behavior == "BLEND":
                 result[j] = blend_colors(result[j], layer[j])
+            elif merge_behavior == "MULTIPLY":
+                result[j] = multiply_colors(result[j], layer[j])
+
+    result[0] = add_colors(result[0], (32, 32, 32))
+
     return result
 
 
@@ -95,7 +104,7 @@ class NeoPixelController:
             self.layer_index = 0
 
     def change_merge_behavior(self, behavior):
-        acceptable = ["OVERWRITE", "ADD", "BLEND"]
+        acceptable = ["OVERWRITE", "ADD", "BLEND", "MULTIPLY"]
         if behavior not in acceptable:
             return False
         else:
