@@ -20,7 +20,4 @@ wait 10
 
 read scripts/transition.txt
 
-read scripts/hallow.txt
-wait 10
-
 read scripts/color_dance.txt

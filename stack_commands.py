@@ -307,6 +307,7 @@ def blink(state, nargs, args):
     effect = args[1]
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
+        return
     
     time = parse_time(args[2])
     if (time is None):

@@ -27,7 +27,7 @@ def merge_layers(layers, merge_behavior="OVERWRITE"):
             elif merge_behavior == "MULTIPLY":
                 result[j] = multiply_colors(result[j], layer[j])
 
-    result[0] = add_colors(result[0], (32, 32, 32))
+    # result[0] = (255, 255, 255)
 
     return result
 
@@ -52,12 +52,10 @@ class NeoPixelController:
         self.effects[self.layer_index] = effect
 
     def resume(self):
-        if (self.effect.type == DYNAMIC):
-            self.paused = False
+        self.paused = False
 
     def pause(self):
-        if (self.effect.type == DYNAMIC):
-            self.paused = True
+        self.paused = True
 
     def stop(self):
         self.pixels.deinit()

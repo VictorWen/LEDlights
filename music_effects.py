@@ -75,7 +75,7 @@ class PyAudioPlayer:
         self.buffer = b''
         self.started = False
         self.p = pyaudio.PyAudio()
-        subprocess.call(["amixer", "sset", "Headphone", "86%"])
+        subprocess.call(["amixer", "sset", "Headphone", "85%"])
 
         self.width = width
         self.channels = channels
