@@ -27,7 +27,7 @@ def merge_layers(layers, merge_behavior="OVERWRITE"):
             elif merge_behavior == "MULTIPLY":
                 result[j] = multiply_colors(result[j], layer[j])
 
-    # result[0] = (255, 255, 255)
+    result[0] = (255, 255, 255)
 
     return result
 
