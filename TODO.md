@@ -1,0 +1,67 @@
+# Planned Features
+
+- [ ] Discord Bot integration
+  - Use Discord to send bot commands
+  - Use Discord to play music
+- [X] Stack Effects
+  - ex: slide colorwipe rainbow
+- [ ] Function-like Commands
+  - ex: slide (colorwipe(fill (RED), 1), 1)
+  - ex: rainbow
+  - ex: fill(RED)
+- [ ] Command variables
+  - ex: set var "slide colorwipe fill RED 1 1"
+  - ex: $var
+    - This is equivalent to calling "slide colorwipe fill RED 1 1"
+  - ex: get var
+    - This prints "slide colorwipe fill RED 1 1"
+- [ ] Dynamically create new colors
+  - ex: setcolor BuRGanDy 200 0 150
+  - ex: fill BURGANDY
+    - same as "rgb 200 0 150"
+    - but can be use in "gradient BURGANDY CLEAR"
+- [X] Layers
+  - Merge layers into display for multiple effects on top of each other
+- [X] Light Scripts
+  - Use text files with commands to send to the controller
+- [ ] Specify strip size
+- New Effects
+  - Music Effects
+    - [X] Play Music
+    - [X] Spectrum Analyzer
+    - [ ] Energy Analyzer
+    - [ ] Beat Analyzer
+  - Arthimetic Effects
+    - [ ] Add
+    - [ ] Multiply
+    - [ ] Subtract
+  - Positioning Effects
+    - [ ] Cut
+      - Select only a piece of the colors to display
+    - [ ] Offset
+      - Move the colors to a position in the strip
+      - Should be used with "cut"
+    - [ ] Center
+      - Move the colors to the center of the strip
+      - Should be used with "cut"
+    - [ ] Reflect
+      - Flip the colors across the center
+  - Color Effects
+    - [ ] GetLayer effect
+      - Take colors from specified layer
+    - [ ] Define colors in file
+      - ex: colors_config.txt
+        - BURGANDY 90 0 70
+        - BLONDE 120 120 30
+    - [ ] Invert Effect
+    - [ ] Brighten Effect
+    - [ ] Contrast Effect
+  - Animation Effects
+    - [ ] Particle Collider
+- Controller System Calls
+  - [ ] Change Effect
+  - [ ] Get layer's colors
+- [ ] Cleanly exit wait
+- [ ] Help command
+  - "help" lists all commands
+  - "help [CMD]" gets the help information of CMD command

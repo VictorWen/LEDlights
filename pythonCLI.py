@@ -29,6 +29,7 @@ class CommandLineInterpreter:
                     print("Invalid command, try again")
 
 
+# TODO: Refactor
 class StackCommandLineInterpreter:
     def __init__(self, commands: list, state):
         self.commands = commands

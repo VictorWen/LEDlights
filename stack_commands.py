@@ -593,12 +593,12 @@ def stop(state, nargs, args):
 def restart(state, nargs, args):
     if state.controller is not None:
         state.controller.stop()
-    pixels = neopixel.NeoPixel(board.D18, 150, brightness=0.35, auto_write=False)
-    pixel_control = NeoPixelController(pixels, tps=25)
+    pixels = neopixel.NeoPixel(board.D10, 150, brightness=0.35, auto_write=False)
+    pixel_control = NeoPixelController(pixels, tps=60)
     state.controller = pixel_control
     state.pixels = pixels
     asyncio.create_task(pixel_control.run())
-    pixel_control.set_effect(ColorWipe(ColorAdapter(RainbowColorSelector()), 1))
+    # pixel_control.set_effect(ColorWipe(ColorAdapter(RainbowColorSelector()), 1))
 
 def get_colors(state, nargs, args):
     value = ""
