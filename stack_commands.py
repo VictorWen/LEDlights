@@ -1,14 +1,14 @@
 from effects import *
 from colors import *
-from fft_effect import FFTEffect
 import asyncio
-from music_effects import PlayMusic, SpectrumEffect
+from music_effects import *
 from neopixel_controller import *
 import board
 import neopixel
 import wave as wav
 import pafy
 import ffmpeg
+import requests
 
 colors = {
     "RED": (255, 0 ,0),
@@ -30,6 +30,7 @@ colors = {
     "LIGHT_BLUE": (64, 64, 255),
     "BLACK": (0, 0, 0),
     "CLEAR": (-1, -1, -1),
+    "HOT_PINK": (255, 20, 64)
 }
 
 def colorname_to_color(colorname):
@@ -472,6 +473,18 @@ def play_music(state, nargs, args):
         return
 
     file = args[1]
+    
+    if file == "spotify":
+        try:
+            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = audio_stream.raw
+        except BaseException as error:
+            state.send(str(error))
+            state.send(f"Error loading spotify")
+            return
+        state.last_command_result = PlayMusicStream(audio_stream)
+        return
+
     if file.startswith("https://"):
         try:
             yt = pafy.new(file)
@@ -483,7 +496,7 @@ def play_music(state, nargs, args):
             process = node_output.run_async(pipe_stdout=True)
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
-            print(error)
+            state.send(str(error))
             state.send(f"Error loading {file} from youtube")
             return
     else:
@@ -506,6 +519,17 @@ def spectrum(state, nargs, args):
         return
 
     file = args[2]
+    if file == "spotify":
+        try:
+            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = audio_stream.raw
+        except BaseException as error:
+            state.send(str(error))
+            state.send(f"Error loading spotify")
+            return
+        state.last_command_result = SpectrumEffectStream(effect, audio_stream, playback=state.playback)
+        return
+
     if file.startswith("https://"):
         try:
             yt = pafy.new(file)
@@ -540,6 +564,17 @@ def piano(state, nargs, args):
         return
 
     file = args[2]
+    if file == "spotify":
+        try:
+            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = audio_stream.raw
+        except BaseException as error:
+            state.send(str(error))
+            state.send(f"Error loading spotify")
+            return
+        state.last_command_result = SpectrumEffectStream(effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
+        return
+
     if file.startswith("https://"):
         try:
             yt = pafy.new(file)

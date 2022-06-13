@@ -1,45 +1,36 @@
+from io import BytesIO
+import requests
 import pyaudio
-import wave
-import sys
 import time
-import pafy
-import ffmpeg
 
-URL = "https://www.youtube.com/watch?v=ZavjGCQ95xI"
+resp = requests.get("http://victorwen-raspberrypi4:3000/stream", stream=True)
+audio_stream = resp.raw
 
-yt = pafy.new(URL)
-audio_stream = yt.getbestaudio().url_https
+def callback(in_data, frame_count, time_info, status):
+    data = audio_stream.read(frame_count * 8)
+    return (data, pyaudio.paContinue)
 
-node_input = ffmpeg.input(audio_stream)
-node_output = node_input.output('pipe:', acodec="pcm_s16le", f="wav")
-process = node_output.run_async(pipe_stdout=True)
+p = pyaudio.PyAudio()
 
 
-with wave.open(process.stdout, 'rb') as wf:
-    def callback(in_data, frame_count, time_info, status):
-        data = wf.readframes(frame_count)
-        return (data, pyaudio.paContinue)
+# open stream using callback (3)
+stream = p.open(format=pyaudio.paInt32,
+                frames_per_buffer=1024,
+                channels=2,
+                rate=44100,
+                output=True,
+                stream_callback=callback)
 
-    p = pyaudio.PyAudio()
+# start the stream (4)
+stream.start_stream()
 
-    # open stream using callback (3)
-    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
-                    output=True,
-                    stream_callback=callback)
+# wait for stream to finish (5)
+while stream.is_active():
+    time.sleep(0.1)
 
-    # start the stream (4)
-    stream.start_stream()
+# stop stream (6)
+stream.stop_stream()
+stream.close()
 
-    # wait for stream to finish (5)
-    while stream.is_active():
-        time.sleep(0.1)
-
-    # stop stream (6)
-    stream.stop_stream()
-    stream.close()
-    wf.close()
-
-    # close PyAudio (7)
-    p.terminate()
+# close PyAudio (7)
+p.terminate()

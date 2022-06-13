@@ -56,6 +56,7 @@ class NeoPixelController:
         self.paused = True
 
     def stop(self):
+        print("stopped")
         self.pixels.deinit()
         self.layers = [[(-1, -1, -1) for i in range(self.N)]]
         self.effects = [None]
@@ -114,6 +115,9 @@ class NeoPixelController:
             if (self.paused):
                 timer = datetime.datetime.now()
                 continue
+            if ((datetime.datetime.now() - timer).total_seconds() < self.delay):
+                await asyncio.sleep(0.001)
+                continue
             
             prev_timer = timer
             timer = datetime.datetime.now()
@@ -138,5 +142,5 @@ class NeoPixelController:
             self.pixels[0] = (255, 255, 255)
             self.pixels.show()
 
-            await asyncio.sleep(self.delay)
+            await asyncio.sleep(0.001)
            

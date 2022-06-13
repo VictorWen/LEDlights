@@ -68,19 +68,26 @@ class AudioPlayer:
 
 
 class PyAudioPlayer:
-    def setup(self, width, channels, rate):
-        self.min_buffer_size = 10000
-        self.max_buffer_size = 50000
+    def setup(self, width, channels, rate, format_override=None):
+        self.min_buffer_size = rate * width * channels / 5
+        self.max_buffer_size = self.min_buffer_size * 2
+        print(self.min_buffer_size, self.max_buffer_size)
 
         self.buffer = b''
         self.started = False
         self.p = pyaudio.PyAudio()
-        subprocess.call(["amixer", "sset", "Headphone", "85%"])
+        # subprocess.call(["amixer", "sset", "Headphone", "85%"])
 
         self.width = width
         self.channels = channels
+
+        format = format_override
+        if format_override is None:
+            format = self.p.get_format_from_width(width)
+
         self.stream = self.p.open(
-            format=self.p.get_format_from_width(width),
+            # output_device_index=0,
+            format=format,
             channels=channels,
             rate=rate,
             output=True,
@@ -90,16 +97,24 @@ class PyAudioPlayer:
 
     def write(self, bytes):
         if (len(self.buffer) + len(bytes)) > self.max_buffer_size:
-            return 
-        self.buffer += bytes
+            n = int(len(self.buffer) + len(bytes) - self.max_buffer_size)
+            self.buffer = bytes 
+            # return
+        else:
+            self.buffer += bytes
         if not self.started and len(self.buffer) >= self.min_buffer_size:
             self.stream.start_stream()
             self.started = True
+        # print("WRITE:", len(self.buffer))
     
     def read(self, in_data, frame_count, time_info, status):
         N = frame_count * self.width * self.channels
         data = self.buffer[0:N]
         self.buffer = self.buffer[N::]
+        n = len(data)
+        if (n < N):
+            data += b'\x00' * (N-n)
+        # print("READ:", len(self.buffer))
         return (data, pyaudio.paContinue)
 
     def close(self):
@@ -148,6 +163,51 @@ class PlayMusic(BaseEffect):
         self.playback.write(data)
 
 
+class PlayMusicStream(BaseEffect):
+    def __init__(self, 
+            stream, 
+            playback=None,
+            width=4,
+            nchannels=1,
+            rate=44100):
+        super().__init__(type=DYNAMIC)
+        self.stream = stream
+
+        self.width = width
+        self.nchannels = nchannels
+        self.rate = rate
+        self.time_sum = 0
+        self.index = 0
+
+        if playback is None:
+            self.playback = PyAudioPlayer()
+        else:
+            self.playback = playback
+
+        self.playback.setup(
+            width = self.width,
+            channels = self.nchannels,
+            rate = self.rate,
+            format_override = pyaudio.paInt32
+        )
+    def tick(self, pixels, time_delta):
+        if (time_delta > 1):
+            print("ESCAPED")
+            return
+        # print(time_delta)
+        self.time_sum += time_delta
+        read = int(self.time_sum * self.rate * self.width * self.nchannels) - self.index
+
+        if self.stream.closed:
+            print("CLOSED")
+            self.playback.close()
+            self.type = STATIC
+            return
+
+        data = self.stream.read(read)
+        self.index += len(data)
+        self.playback.write(data)
+
 class SpectrumEffect(BaseEffect):
     def __init__(self, color, wavfile, playback=None, linear=True, nbins=37, min_freq=115, max_freq=900):
         super().__init__(type=DYNAMIC)
@@ -168,6 +228,8 @@ class SpectrumEffect(BaseEffect):
         self.max_freq = max_freq
         self.linear = linear
 
+        self.fade = None
+
         self.closed = False
 
         self.playback = playback
@@ -181,6 +243,7 @@ class SpectrumEffect(BaseEffect):
     def tick(self, pixels, time_delta):
         if (time_delta > 1):
             return
+        # print(time_delta)
         self.time_sum += time_delta
         read = min(int(self.time_sum * self.rate - self.frame), self.nframes - self.frame)
         if read == 0 and not self.closed:
@@ -230,4 +293,103 @@ class SpectrumEffect(BaseEffect):
         for i in range(N):
             index = int(i / N * (self.nbins - 1))
             pixels[i] = color[int(bins[index] * (N - 1))]
+
+class SpectrumEffectStream(BaseEffect):
+    def __init__(self, 
+            color, 
+            stream, 
+            playback=None,
+            linear=True, 
+            nbins=37,
+            min_freq=115,
+            max_freq=900,
+            width=4,
+            nchannels=1,
+            rate=44100):
+
+        super().__init__(type=DYNAMIC)
+        self.stream = stream
+        self.color = color
+
+        self.width = width
+        self.nchannels = nchannels
+        self.rate = rate
+
+        self.time_sum = 0
+        self.index = 0
+
+        self.threshold = 1E7
+        self.nbins = nbins
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.linear = linear
+
+        self.closed = False
+
+        self.playback = playback
+        if self.playback is not None:
+            self.playback.setup(
+                width = self.width,
+                channels = self.nchannels,
+                rate = self.rate,
+                format_override=pyaudio.paInt32
+            )
+    
+    def tick(self, pixels, time_delta):
+        if (time_delta > 0.1):
+            print("ESCAPED")
+            return
+        self.time_sum += time_delta
+        # print(time_delta)
+        read = int(self.time_sum * self.rate * self.width * self.nchannels) - self.index
+        read = int(read / 4) * 4
+
+        if self.stream.closed:
+            print("CLOSED")
+            self.playback.close()
+            self.type = STATIC
+            return
+
+        data = self.stream.read(read)
+        self.index += read
+
+        if self.playback is not None:
+            self.playback.write(data)
+
+        values = np.frombuffer(data, dtype="<i4")
+        length = next_fast_len(read)
+
+        ints = rfft(values, length)
+        ints = abs(ints)
+
+        freq = rfftfreq(length, 1/self.rate)
+
+        bins = bin_frequencies(ints, freq, self.nbins, self.min_freq, self.max_freq, linear=self.linear)
+        bin_max = bins.max()
+
+        self.threshold = max((2 - time_delta) / 2, 0) * self.threshold + min(time_delta / 2, 1) * bin_max * 1
+
+        # bins = np.log10((bins + 1) / self.threshold * 10)
+        bins = (np.power(100, (bins / self.threshold)) - 1) / 99
+        # bins = np.log10(9 * bins / self.threshold + 1)
+        # bins = bins / self.threshold
+        
+        for i in range(len(bins)):
+            bin = bins[i]
+            if bin > 1:
+                bin = 1
+            elif bin < 0.1:
+                bin = 0
+            bins[i] = bin
+        
+        # print(bins)
+
+        color = clone_pixels(pixels)
+        self.color.tick(color, time_delta)
+        N = len(color)
+
+        for i in range(N):
+            index = int(i / N * (self.nbins - 1))
+            pixels[i] = color[int(bins[index] * (N - 1))]
+
 
