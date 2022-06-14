@@ -55,6 +55,39 @@ def bin_frequencies(ints, freqs, nbins, min_freq, max_freq, linear=True):
     
     return np.array(bins)
 
+def fft(values, length, rate, nbins, min_freq, max_freq, linear, time_delta, threshold, fade):
+    length = next_fast_len(length)
+
+    ints = rfft(values, length)
+    ints = abs(ints)
+
+    freq = rfftfreq(length, 1/rate)
+
+    bins = bin_frequencies(ints, freq, nbins, min_freq, max_freq, linear=linear)
+    bin_max = bins.max()
+
+    threshold = max((2 - time_delta) / 2, 0) * threshold + min(time_delta / 2, 1) * bin_max * 0.80
+
+    # bins = np.log10((bins + 1) / self.threshold * 10)
+    bins = (np.power(100, (bins / threshold)) - 1) / 99
+    # bins = np.log10(9 * bins / self.threshold + 1)
+    # bins = bins / self.threshold
+    
+    for i in range(len(bins)):
+        bin = bins[i] + fade[i]
+        if bin > 1:
+            bin = 1
+        elif bin < 0.1:
+            bin = 0
+        bins[i] = bin
+        fade[i] = bins[i] * 0.75
+
+    return bins, threshold
+
+def fill_pixels_from_bins(bins, nbins, pixels, N, color):
+    for i in range(N):
+        index = int(i / N * (nbins - 1))
+        pixels[i] = color[int(bins[index] * (N - 1))]
 
 class AudioPlayer:
     def write(self, bytes):
@@ -192,7 +225,7 @@ class PlayMusicStream(BaseEffect):
         )
     def tick(self, pixels, time_delta):
         if (time_delta > 1):
-            print("ESCAPED")
+            # print("ESCAPED")
             return
         # print(time_delta)
         self.time_sum += time_delta
@@ -259,40 +292,13 @@ class SpectrumEffect(BaseEffect):
             self.playback.write(data)
 
         values = np.frombuffer(data, dtype="<i2")
-        length = next_fast_len(read)
-
-        ints = rfft(values, length)
-        ints = abs(ints)
-
-        freq = rfftfreq(length, 1/self.rate)
-
-        bins = bin_frequencies(ints, freq, self.nbins, self.min_freq, self.max_freq, linear=self.linear)
-        bin_max = bins.max()
-
-        self.threshold = max((2 - time_delta) / 2, 0) * self.threshold + min(time_delta / 2, 1) * bin_max * 1
-
-        # bins = np.log10((bins + 1) / self.threshold * 10)
-        bins = (np.power(100, (bins / self.threshold)) - 1) / 99
-        # bins = np.log10(9 * bins / self.threshold + 1)
-        # bins = bins / self.threshold
-        
-        for i in range(len(bins)):
-            bin = bins[i]
-            if bin > 1:
-                bin = 1
-            elif bin < 0.1:
-                bin = 0
-            bins[i] = bin
-        
-        # print(bins)
+        bins, self.threshold = fft(values, read, self.rate, self.nbins, self.min_freq, self.max_freq, self.linear, time_delta, self.threshold, self.fade)
 
         color = clone_pixels(pixels)
         self.color.tick(color, time_delta)
         N = len(color)
 
-        for i in range(N):
-            index = int(i / N * (self.nbins - 1))
-            pixels[i] = color[int(bins[index] * (N - 1))]
+        fill_pixels_from_bins(bins, self.nbins, pixels, N, color,)
 
 class SpectrumEffectStream(BaseEffect):
     def __init__(self, 
@@ -324,6 +330,8 @@ class SpectrumEffectStream(BaseEffect):
         self.max_freq = max_freq
         self.linear = linear
 
+        self.fade = [0 for i in range(self.nbins)]
+
         self.closed = False
 
         self.playback = playback
@@ -337,7 +345,7 @@ class SpectrumEffectStream(BaseEffect):
     
     def tick(self, pixels, time_delta):
         if (time_delta > 0.1):
-            print("ESCAPED")
+            # print("ESCAPED")
             return
         self.time_sum += time_delta
         # print(time_delta)
@@ -357,39 +365,10 @@ class SpectrumEffectStream(BaseEffect):
             self.playback.write(data)
 
         values = np.frombuffer(data, dtype="<i4")
-        length = next_fast_len(read)
-
-        ints = rfft(values, length)
-        ints = abs(ints)
-
-        freq = rfftfreq(length, 1/self.rate)
-
-        bins = bin_frequencies(ints, freq, self.nbins, self.min_freq, self.max_freq, linear=self.linear)
-        bin_max = bins.max()
-
-        self.threshold = max((2 - time_delta) / 2, 0) * self.threshold + min(time_delta / 2, 1) * bin_max * 1
-
-        # bins = np.log10((bins + 1) / self.threshold * 10)
-        bins = (np.power(100, (bins / self.threshold)) - 1) / 99
-        # bins = np.log10(9 * bins / self.threshold + 1)
-        # bins = bins / self.threshold
-        
-        for i in range(len(bins)):
-            bin = bins[i]
-            if bin > 1:
-                bin = 1
-            elif bin < 0.1:
-                bin = 0
-            bins[i] = bin
-        
-        # print(bins)
+        bins, self.threshold = fft(values, read, self.rate, self.nbins, self.min_freq, self.max_freq, self.linear, time_delta, self.threshold, self.fade)
 
         color = clone_pixels(pixels)
         self.color.tick(color, time_delta)
         N = len(color)
 
-        for i in range(N):
-            index = int(i / N * (self.nbins - 1))
-            pixels[i] = color[int(bins[index] * (N - 1))]
-
-
+        fill_pixels_from_bins(bins, self.nbins, pixels, N, color)
