@@ -7,8 +7,12 @@ import asyncio
 import board
 import neopixel
 from stack_commands import commands, State
-import sys
-import os
+from decouple import config
+
+CLIENT_KEY = config('CLIENT_KEY')
+AUTH_USERS = config('AUTH_USERS')
+AUTH_USERS = AUTH_USERS.strip().split()
+print(AUTH_USERS)
 
 class DiscordCLI:
     def __init__(self, commands: dict, state, client):
@@ -65,62 +69,9 @@ async def startup():
 
 client.loop.create_task(startup())
 
-# class DiscordPlayer:
-#     def __init__(self):
-#         self.buffer = b''
-#         self.index = 0
-    
-#     def read(self, frames=3840):
-#         next = self.index + frames
-#         next = min(next, len(self.buffer))
-#         data = self.buffer[self.index:next]
-#         self.index = next
-#         return data
-    
-#     def write(self, data):
-#         self.buffer = b''.join([self.buffer, data])
-
-
-# player = DiscordPlayer()
-
-# async def join_vc(client: discord.Client, channel_id: int) -> Optional[discord.VoiceClient]:
-#     channel = client.get_channel(channel_id)
-#     guild = channel.guild
-#     vc = guild.voice_client
-#     if not vc:
-#         print(f"Connecting to {channel}")
-#         vc = await channel.connect(timeout=5)
-#         print(f"Connected to {channel}")
-#     elif vc.channel.id != channel.id:
-#         print(f"Moving to {channel}")
-#         await vc.move_to(channel)
-#         print(f"Moved to {channel}")
-
-#     timeout = 0
-#     while not vc.is_connected() or vc.channel.id != channel.id:
-#         timeout += 1
-#         print(f"Waiting for Voice Client connection, attempt #{timeout}")
-#         await asyncio.sleep(1)
-#         if timeout >= 10:
-#             print(f"Failed to connect to Voice Client")
-#             await vc.disconnect(force=True)
-#             print(f"Successfully disconnected")
-#             return
-#     return vc
-
-# async def play_music(client: discord.Client, channel_id: int):
-#     channel = client.get_channel(channel_id)
-#     vc = channel.guild.voice_client
-#     if not vc:
-#         vc = await join_vc(client, channel_id)
-#     audio = discord.PCMAudio(player)
-#     audio_player = discord.PCMVolumeTransformer(audio)
-#     print(f'Playing audio')
-#     vc.play(audio_player)
-
 @client.event
 async def on_message(message):
-    if (message.channel.type != discord.ChannelType.private or message.author.id != 142817055924551680):
+    if (message.channel.type != discord.ChannelType.private or str(message.author.id) not in AUTH_USERS):
         return
     
     await cli.command(message)
@@ -131,4 +82,4 @@ async def on_ready():
     print(f'Logged in as {client.user}')
 
 # This will be reset
-client.run("ODEzNjQ5Njc5MjQ5OTY1MDU3.YDSYUA.ZzxitzNrOaQqdaTzSvTaadoI2Cs")
+client.run(CLIENT_KEY)
