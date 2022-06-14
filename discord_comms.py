@@ -15,31 +15,6 @@ AUTH_USERS = AUTH_USERS.strip().split()
 print(AUTH_USERS)
 
 class DiscordCLI:
-    def __init__(self, commands: dict, state, client):
-        self.commands = commands
-        self.state = state
-        self.client = client
-
-    async def print(self, message, text):
-        await message.reply(text)
-
-    async def command(self, message):
-        self.state.send = lambda s : asyncio.create_task(message.reply(s if s is not None else ""))
-        input_str = message.content
-        args = input_str.strip().split()
-        nargs = len(args)
-        if (nargs > 0):
-            command = args[0]
-            if (command in self.commands):
-                self.commands[command](self.state, nargs, args)
-                if (command == "exit"):
-                    self.running = False
-            elif (command == "exit"):
-                self.running = False
-            else:
-                await self.print(message, "Invalid command, try again")
-
-class DiscordStackCommandLineInterpreter:
     def __init__(self, commands: list, state, client):
         self.state = state
         self.client = client
@@ -63,7 +38,7 @@ async def startup():
     pixel_control = NeoPixelController(pixels, tps=60)
     state = State(pixel_control, pixels)
 
-    cli = DiscordStackCommandLineInterpreter(commands, state, client)
+    cli = DiscordCLI(commands, state, client)
 
     asyncio.create_task(pixel_control.run())
 
