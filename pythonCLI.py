@@ -1,6 +1,9 @@
 import asyncio
 import sys
 import os
+from decouple import config
+
+SCRIPTS_PATH = config('SCRIPTS_PATH', default="./")
 
 async def ainput(string: str) -> str:
     print(string + ' ', end='', flush=True)
@@ -135,7 +138,7 @@ class StackCLI:
         
         filename = args[1]
         try:
-            with open(filename, 'r') as file:
+            with open(os.path.join(SCRIPTS_PATH, filename), 'r') as file:
                 old_queue = self.queue
                 self.queue = file.readlines()
                 self.queue.extend(old_queue)
