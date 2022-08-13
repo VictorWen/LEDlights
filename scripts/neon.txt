@@ -1,0 +1,2 @@
+resetlayers
+wave ngradient "RED RED PURPLE BLUE BLUE" 4 150
