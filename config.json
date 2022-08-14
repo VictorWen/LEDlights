@@ -1,0 +1,25 @@
+{
+    "scripts path": "/home/pi/Documents/LEDlights/scripts",
+    "vars": {
+        "RED": "(rgb 255 0 0)",
+        "GREEN": "(rgb 0 255 0)",
+        "BLUE": "(rgb 0 0 255)",
+        "YELLOW": "(rgb 255 255 0)",
+        "CYAN": "(rgb 0 255 255)",
+        "PURPLE": "(rgb 255 0 255)",
+        "VIOLET": "(rgb 255 0 255)",
+        "WHITE": "(rgb 255 255 255)",
+        "PINK": "(rgb 255 64 64)",
+        "ORANGE": "(rgb 255 64 0)",
+        "MAGENTA": "(rgb 255 0 64)",
+        "LIGHT_GREEN": "(rgb 64 255 64)",
+        "LIME": "(rgb 64 255 0)",
+        "AQUAMARINE": "(rgb 0 255 64)",
+        "AQUA": "(rgb 0 64 255)",
+        "INDIGO": "(rgb 64 0 255)",
+        "LIGHT_BLUE": "(rgb 64 64 255)",
+        "BLACK": "(rgb 0 0 0)",
+        "CLEAR": "(rgb -1 -1 -1)",
+        "HOT_PINK": "(rgb 255 20 64)"
+    }
+}

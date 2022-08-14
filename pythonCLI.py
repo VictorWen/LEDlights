@@ -2,10 +2,31 @@ from argparse import ArgumentParser
 import asyncio
 import sys
 import os
-from decouple import config
+import json
 import traceback
 
-SCRIPTS_PATH = config('SCRIPTS_PATH', default="./")
+CONFIG = {}
+if os.path.exists("config.json"):
+    with open("config.json", 'r') as file:
+        CONFIG = json.load(file)
+
+
+def config(path, default=None):
+    tokens = path.split('.')
+    obj = CONFIG
+    for token in tokens:
+        if token in obj:
+            obj = obj[token]
+        else:
+            return default
+    if obj is None:
+        return default
+    else:
+        return obj
+
+
+SCRIPTS_PATH = config('scripts path', default="./")
+VARS = config('vars', default={})
 
 # TERMINALS
 KEYWORD_NODE = "Keyword"
@@ -18,7 +39,7 @@ LIST_NODE = "List"
 OBJECT_NODE = "Object"
 EXPR_NODE = "Expr"
 
-SINGLE_TOKENS = ['(', ")", "[", "]"]
+SINGLE_TOKENS = ['(', ")", "[", "]", '=']
 
 
 async def ainput(string: str) -> str:
@@ -39,6 +60,8 @@ class StackCLI:
         self.commands = _create_command_dict(commands)
         self.state = state
 
+        self.state.vars.update(VARS)
+
         self.end_queue = end_queue
 
         self.queue = []
@@ -50,13 +73,16 @@ class StackCLI:
             "wait",
             "do",
             "exit"
-        ], self.commands)
+        ], self.commands, self.state)
         self.evaluator = CommandEvaluator(self.state, self.commands, self)
 
     async def run(self):
         self.running = True
         self.queue = []
         self.queueing = False
+
+        if os.path.exists(os.path.join(SCRIPTS_PATH, "startup.txt")):
+            await self.parse_input('read "startup.txt"')
 
         while self.running:
             if self.queueing:
@@ -77,32 +103,30 @@ class StackCLI:
         try:
             await self.parse_queue()
         except Exception as e:
-            self.state.send(traceback.format_exc())
+            # self.state.send(traceback.format_exc())
+            self.state.send(e)
 
     async def parse_queue(self):
         while not self.queueing and len(self.queue) > 0:
             input_str = self.queue.pop(0)
             tokens = tokenize(input_str)
             parsed_input = self.parser.parse(tokens)
-            eval_obj = self.evaluator.evaluate(parsed_input)
-            if eval_obj is not None:
+            self.state.last_command_result = None
+            eval_obj = await self.evaluator.evaluate(parsed_input)
+            if self.state.last_command_result is not None:
                 self.state.controller.set_effect(eval_obj)
-            
-    def run_keyword(self, name, args):
-        asyncio.create_task(self.process_keyword(name, args))
+            elif eval_obj is not None:
+                self.state.send(eval_obj)
 
     async def process_keyword(self, name, args):
         nargs = len(args)
         if (nargs > 0):
             if (name == "wait"):
                 await self.process_wait(args, nargs)
-                return
             elif (name == "read"):
                 self.process_read(args, nargs)
-                return
             elif (name == "do"):
                 self.queueing = True
-                return
             elif (name == "exit"):
                 self.running = False
                 if "exit" in self.commands:
@@ -135,6 +159,13 @@ class StackCLI:
             self.state.send(os.getcwd())
             raise Exception("Invalid file")
 
+    def process_let(self, args, nargs):
+        if (nargs < 3):
+            raise Exception("let usage: let VAR_NAME EXPRESSION")
+
+        var_name = args[1]
+        self.state.vars[var_name] = " ".join(args[2:])
+
 
 def tokenize(input_str):
     input_str = input_str.strip()
@@ -154,7 +185,17 @@ def tokenize(input_str):
             if i + 1 == len(input_str) and input_str[i] != '"':
                 raise Exception("Unmatched '\"'")
             words.append(f'"{quoted_str}"')
+        elif c == "=":
+            if len(built_word) > 0:
+                words.append(built_word)
+                built_word = ""
+            words.append("=")
+            words.append(input_str[i+1:].strip())
+            break
         elif c in SINGLE_TOKENS:
+            if len(built_word) > 0:
+                words.append(built_word)
+                built_word = ""
             words.append(input_str[i])
         elif c == ' ':
             if len(built_word) > 0:
@@ -188,31 +229,79 @@ class ParseNode:
 
 
 class CommandParser:
-    def __init__(self, keywords, commands):
+    def __init__(self, keywords, commands, state):
         self.keywords = keywords
         self.commands = commands
+        self.state = state
+        self.variables = state.vars
 
     def parse(self, tokens):
         root = ParseNode(type=OBJECT_NODE)
         stack = []
 
+        self.is_first_token = True
+        self.variable_set_state = 0
+        self.variable_get_state = 0
+
         for token in tokens:
             self.process_token(token, stack)
+            self.is_first_token = False
 
-        self.check_stack_for_unmatched(stack)
+        self.check_for_errors(stack)
 
         root.children = stack
         root.is_leaf = False
         return root
 
-    def check_stack_for_unmatched(self, stack):
+    def check_for_errors(self, stack):
         if '(' in stack:
             raise Exception("Unmatched '('")
         if '[' in stack:
             raise Exception("Unmatched '['")
+        if self.variable_set_state != 0:
+            raise Exception(
+                "Unfinished set variable expression. Usage: let VAR_NAME = EXPRESSION")
+        if self.variable_get_state != 0:
+            raise Exception(
+                "Unfinished get variable expression. Usage: get VAR_NAME")
 
     def process_token(self, token, stack):
-        if token == "(":
+        if token == "let":
+            if not self.is_first_token:
+                raise Exception(
+                    "'let' can only be used at the beginning of an expression")
+            self.variable_set_state = 1
+        elif token == "get":
+            if not self.is_first_token:
+                raise Exception(
+                    "'get' can only be used at the beginning of an expression")
+            self.variable_get_state = 1
+
+        elif self.variable_set_state == 1:
+            self.variable_set_state = 2
+            if not token.isalpha() or len(token) < 1:
+                raise Exception(f"Invalid variable name: {token}")
+            if token in self.keywords or token in self.commands:
+                raise Exception(
+                    f"Invalid variable name: {token} is already a reserved value")
+            stack.append(token)
+        elif self.variable_set_state == 2:
+            if token != '=':
+                raise Exception(f"Expecting '=' after 'let {stack.pop(-1)}'")
+            self.variable_set_state = 3
+        elif self.variable_set_state == 3:
+            self.variable_set_state = 0
+            var_name = stack.pop(-1)
+            self.variables[var_name] = token
+
+        elif self.variable_get_state == 1:
+            self.variable_get_state = 0
+            if token in self.variables:
+                self.state.send(self.variables[token])
+            else:
+                raise Exception(f"Undefined variable name: {token}")
+
+        elif token == "(":
             stack.append('(')
         elif token == ")":
             self.parse_parentheses(stack)
@@ -256,7 +345,7 @@ class CommandParser:
 
     def create_terminal_node(self, token):
         if len(token) >= 2 and token.startswith('"') and token.endswith('"'):
-            return ParseNode(type=STRING_NODE, value=token)
+            return ParseNode(type=STRING_NODE, value=token[1:len(token)-1])
         elif token[0].isdigit() or \
             token[0] == "-" and len(token) >= 2 and \
                 (token[1] == "." or token[1].isdigit()):
@@ -269,8 +358,12 @@ class CommandParser:
             return ParseNode(type=KEYWORD_NODE, value=token)
         elif token in self.commands:
             return ParseNode(type=COMMAND_NODE, value=token)
+        elif token in self.variables:
+            var_value = self.variables[token]
+            var_tokens = tokenize(var_value)
+            return self.parse(var_tokens)
         else:
-            raise Exception(f"{token} is not a valid symbol")
+            raise Exception(f"{token} is an undefined symbol")
 
 
 class CommandEvaluator():
@@ -279,45 +372,50 @@ class CommandEvaluator():
         self.commands = command_dict
         self.cli_controller = cli_controller
 
-    def evaluate(self, parse_root: ParseNode):
+    async def evaluate(self, parse_root: ParseNode):
         parse_type = parse_root.type
         if parse_type == OBJECT_NODE:
-            return self.eval_object(parse_root)
+            return await self.eval_object(parse_root)
         elif parse_type == LIST_NODE:
-            return self.eval_list(parse_root)
-        elif parse_type in [KEYWORD_NODE, COMMAND_NODE]:
-            raise Exception(
-                f"Invalid argument: {parse_root.value}. Command should be surrounded in parentheses")
+            return await self.eval_list(parse_root)
+        elif parse_type == KEYWORD_NODE:
+            return await self.eval_keyword(parse_root.value, [parse_root.value])
+        elif parse_type == COMMAND_NODE:
+            return self.eval_command(parse_root.value, [parse_root.value])
         else:
             return parse_root.value
 
-    def eval_object(self, object_node):
+    async def eval_object(self, object_node):
         if len(object_node.children) < 1:
             return None
 
-        eval_args = []
-        for child in object_node.children[1:]:
-            eval_args.append(self.evaluate(child))
+        primary = object_node.children[0]
+        obj_type = primary.type
+        obj_value = primary.value
 
-        obj_name = object_node.children[0].value
-        if obj_name is None:
-            raise Exception("Invalid command")
+        if len(object_node.children) == 1:
+            return await self.evaluate(primary)
+        elif obj_type not in [KEYWORD_NODE, COMMAND_NODE]:
+            raise Exception("Non command-like objects cannot have arguments")
+        else:
+            eval_args = [obj_value]
+            for child in object_node.children[1:]:
+                eval_args.append(await self.evaluate(child))
 
-        obj_type = object_node.children[0].type
-        if obj_type == KEYWORD_NODE:
-            return self.eval_keyword(obj_name, eval_args)
-        if obj_type == COMMAND_NODE:
-            return self.eval_command(obj_name, eval_args)
+            if obj_type == KEYWORD_NODE:
+                return await self.eval_keyword(obj_value, eval_args)
+            if obj_type == COMMAND_NODE:
+                return self.eval_command(obj_value, eval_args)
 
-    def eval_list(self, list_node):
+    async def eval_list(self, list_node):
         eval_children = []
         for child in list_node.children:
-            eval_children.append(self.evaluate(child))
+            eval_children.append(await self.evaluate(child))
         return eval_children
 
-    def eval_keyword(self, keyword_name, args):
+    async def eval_keyword(self, keyword_name, args):
         if self.cli_controller is not None:
-            self.cli_controller.run_keyword(keyword_name, args)
+            await self.cli_controller.process_keyword(keyword_name, args)
         return None
 
     def eval_command(self, command_name, args):
@@ -331,9 +429,9 @@ if __name__ == "__main__":
     keywords = ["test", "exit"]
     commands = ["fill", "rainbow"]
 
-    parser = CommandParser(keywords, commands)
+    parser = CommandParser(keywords, commands, {})
     result = parser.parse(["exit", "-.1", '"test"', 'test',
-                        '(', 'fill',  '3', ')', '[', '1', '3', '"string"', ']'])
+                           '(', 'fill',  '3', ')', '[', '1', '3', '"string"', ']'])
     print(result)
 
     result = parser.parse(['rainbow', '(', 'rainbow', '0.0', ')'])
@@ -345,7 +443,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
 
-    test_str = 'exit -.1 "test" test (fill 3 ) [ 1 3 "string "]  '
+    test_str = 'exit -.1 "test" test (fill 3) [ 1 3 "string "]  '
     tokens = tokenize(test_str)
     print(tokens)
     print(parser.parse(tokens))

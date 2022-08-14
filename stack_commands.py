@@ -11,10 +11,10 @@ import ffmpeg
 import requests
 
 colors = {
-    "RED": (255, 0 ,0),
+    "RED": (255, 0, 0),
     "GREEN": (0, 255, 0),
     "BLUE": (0, 0, 255),
-    "YELLOW" : (255, 255, 0),
+    "YELLOW": (255, 255, 0),
     "CYAN": (0, 255, 255),
     "PURPLE": (255, 0, 255),
     "VIOLET": (255, 0, 255),
@@ -33,6 +33,7 @@ colors = {
     "HOT_PINK": (255, 20, 64)
 }
 
+
 def colorname_to_color(colorname):
     try:
         if colorname in colors:
@@ -42,12 +43,14 @@ def colorname_to_color(colorname):
     print(f"Error: {colorname} is not a valid COLOR")
     return None
 
+
 def hexstring_to_rgb(hex):
     hex = hex.strip('#')
     try:
         return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
     except:
         return None
+
 
 def parse_rgb_color(r, g, b):
     try:
@@ -57,8 +60,9 @@ def parse_rgb_color(r, g, b):
         if (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
             return (r, g, b)
     except:
-        pass    
+        pass
     return None
+
 
 def parse_time(time):
     try:
@@ -69,222 +73,87 @@ def parse_time(time):
         pass
     return None
 
+
 class State:
     def __init__(self, controller, pixels, send=print):
         self.controller = controller
         self.pixels = pixels
         self.send = send
+        self.vars = {}
         self.last_command_result = None
         self.playback = None
+
 
 class Command:
     def __init__(self, name, call, cmd_type="CONTROL", n_args=0):
         self.name = name
-        assert(cmd_type == "CONTROL" or cmd_type == "EFFECT")
+        assert (cmd_type == "CONTROL" or cmd_type == "EFFECT")
         self.call = call
         self.cmd_type = cmd_type
         self.n_args = n_args
-
 
     def run(self, state, n_args, args):
         self.call(state, n_args, args)
 
 
-def fill(state, nargs, args):
-    if (nargs < 2):
-        state.send(f"Format: {args[0]} COLOR")
-        return
-
-    color = colorname_to_color(args[1])
-    if (color is None):
-        return
-
-    state.last_command_result = ColorAdapter(SingleColorSelector(color))
-
-
 def gradient(state, nargs, args):
-    if (nargs < 2):
-        state.send(f"Format: {args[0]} COLOR1 COLOR2")
-        return
-    
-    color1 = colorname_to_color(args[1])
-    if (color1 is None):
-        return
-    
-    color2 = colorname_to_color(args[2])
-    if (color2 is None):
-        return
-    
-    state.last_command_result = ColorAdapter(GradientColorSelector(color1, color2))
-
-
-def gradient3(state, nargs, args):
-    if (nargs < 4):
-        state.send(f"Format: {args[0]} COLOR1 COLOR2 COLOR3")
-        return
-    
-    color1 = colorname_to_color(args[1])
-    if (color1 is None):
-        return
-    
-    color2 = colorname_to_color(args[2])
-    if (color2 is None):
-        return
-    
-    color3 = colorname_to_color(args[3])
-    if (color3 is None):
-        return
-    
-    state.last_command_result = ColorAdapter(Gradient3ColorSelector(color1, color2, color3))
-
-
-def ngradient(state, nargs, args):
-    if (nargs < 2):
-        state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
-        return
-    
-    if isinstance(args[1], str):
-        colors = args[1].strip().split()
-    elif isinstance(args[1], list):
-        colors = args[1]
-    else:
-        state.send(f"Invalid COLOR list {args[1]}")
-        return
-    
-    for i in range(len(colors)):
-        color = colorname_to_color(colors[i])
-        if (color is None):
-            return
-        colors[i] = color
-    
-    state.last_command_result = ColorAdapter(NGradientColorSelector(colors))
-
-
-def dgradient(state, nargs, args):
     if nargs < 3:
-        state.send(f"Format: {args[0]} [EFFECT(1) EFFECT(2) ... EFFECT(N)] [WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]")
-        return
-    
-    if isinstance(args[1], list):
-        for effect in args[1]:
-            if not isinstance(effect, BaseEffect):
-                state.send(f"Invalid EFFECT {effect}")
-                return    
-    elif not isinstance(args[1], BaseEffect):
-        state.send(f"Invalid EFFECT list {args[1]}")
-        return
-    
-    if isinstance(args[2], list):
-        weights = []
-        for weight in args[2]:
-            try:
-                weights.append(int(weight))
-            except:
-                state.send(f"Invalid WEIGHT {weight}")
-                return
-    elif isinstance(args[2], str):
-        try:
-            weights = int(args[2])
-        except:
-            state.send(f"Invalid WEIGHT {args[2]}")
-            return
-    else:
-        state.send(f"Invalid WEIGHT list {args[2]}")
-        return
+        raise Exception(
+            f"Format: {args[0]} EFFECT(1) EFFECT(2) ... EFFECT(N) <[WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]>")
 
-    state.last_command_result = DynamicGradient(args[1], weights)
+    if isinstance(args[-1], BaseEffect):
+        color_effects = args[1:]
+        for effect in color_effects:
+            if not isinstance(effect, BaseEffect):
+                raise Exception(f"Invalid EFFECT {effect}")
+        weights = -1
+    else:
+        color_effects = args[1:-1]
+        weights = []
+        if not isinstance(args[-1], list):
+            raise Exception(
+                f"Format: {args[0]} EFFECT(1) EFFECT(2) ... EFFECT(N) <[WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]>")
+        for w in args[-1]:
+            try:
+                weights.append(int(w))
+            except:
+                raise Exception(f"Invalid integer WEIGHT {w}")
+        if len(weights) != len(color_effects):
+            raise Exception(
+                f"The number of WEIGHTs must equal the number of EFFECTs ({len(color_effects)})")
+
+    for effect in color_effects:
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"Invalid EFFECT {effect}")
+
+    state.last_command_result = DynamicGradient(color_effects, weights)
 
 
 def split(state, nargs, args):
-    if (nargs < 2):
-        state.send(f"Format: {args[0]} COLOR1 COLOR2")
-        return
-    
-    color1 = colorname_to_color(args[1])
-    if (color1 is None):
-        return
-    
-    color2 = colorname_to_color(args[2])
-    if (color2 is None):
-        return
-    
-    state.last_command_result = ColorAdapter(SplitColorSelector(color1, color2))
-
-
-def split3(state, nargs, args):
-    if (nargs < 4):
-        state.send(f"Format: {args[0]} COLOR1 COLOR2 COLOR3")
-        return
-    
-    color1 = colorname_to_color(args[1])
-    if (color1 is None):
-        return
-    
-    color2 = colorname_to_color(args[2])
-    if (color2 is None):
-        return
-    
-    color3 = colorname_to_color(args[3])
-    if (color3 is None):
-        return
-    
-    state.last_command_result = ColorAdapter(Split3ColorSelector(color1, color2, color3))
-
-
-def nsplit(state, nargs, args):
-    if (nargs < 2):
-        state.send(f"Format: {args[0]} \"COLOR(1) COLOR(2) ... COLOR(N)\"")
-        return
-
-    if isinstance(args[1], str):
-        colors = args[1].strip().split()
-    elif isinstance(args[1], list):
-        colors = args[1]
-    else:
-        state.send(f"Invalid COLOR list {args[1]}")
-        return
-    
-    for i in range(len(colors)):
-        color = colorname_to_color(colors[i])
-        if (color is None):
-            return
-        colors[i] = color
-
-    state.last_command_result = ColorAdapter(NSplitColorSelector(colors))
-
-
-def dsplit(state, nargs, args):
     if nargs < 2:
-        state.send(f"Format: {args[0]} [EFFECT(1) EFFECT(2) ... EFFECT(N)]")
-        return
-    
-    if isinstance(args[1], list):
-        for effect in args[1]:
-            if not isinstance(effect, BaseEffect):
-                state.send(f"Invalid EFFECT {effect}")
-                return    
-    elif not isinstance(args[1], BaseEffect):
-        state.send(f"Invalid EFFECT list {args[1]}")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT(1) EFFECT(2) ... EFFECT(N)")
 
-    state.last_command_result = DynamicSplit(args[1])
+    color_effects = args[1:]
+    for effect in color_effects:
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"Invalid EFFECT {effect}")
+
+    state.last_command_result = DynamicSplit(color_effects)
 
 
 def rainbow(state, nargs, args):
     state.last_command_result = ColorAdapter(RainbowColorSelector())
-
-def redgreenblue(state, nargs, args):
-    state.last_command_result = ColorAdapter(RGBColorSelector())
 
 
 def rgb(state, nargs, args):
     if (nargs < 4):
         state.send(f"Format: {args[0]} R G B")
         return
-    
+
     rgb = parse_rgb_color(args[1], args[2], args[3])
     if (rgb is None):
-        state.send(f"Error: ({args[1]}, {args[2]}, {args[3]}) is not a valid RGB Color")
+        state.send(
+            f"Error: ({args[1]}, {args[2]}, {args[3]}) is not a valid RGB Color")
         return None
     state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
@@ -309,12 +178,12 @@ def blink(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = BlinkEffect(effect, time)
 
 
@@ -327,13 +196,14 @@ def color_wipe(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = ColorWipe(effect, time)
+
 
 def fade_in(state, nargs, args):
     if (nargs < 3):
@@ -344,13 +214,14 @@ def fade_in(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = FadeIn(effect, time)
+
 
 def fade_out(state, nargs, args):
     if (nargs < 3):
@@ -361,13 +232,14 @@ def fade_out(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = FadeOut(effect, time)
+
 
 def blink_fade(state, nargs, args):
     if (nargs < 3):
@@ -378,13 +250,14 @@ def blink_fade(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = BlinkFade(effect, time)
+
 
 def wave(state, nargs, args):
     if (nargs < 4):
@@ -395,17 +268,17 @@ def wave(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid PERIOD')
         return
-    
+
     length = parse_time(args[3])
     if (time is None):
         state.send(f'Error {args[3]} is not a valid WAVELENGTH')
         return
-    
+
     state.last_command_result = WaveEffect(effect, time, length)
 
 
@@ -418,12 +291,12 @@ def wheel(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = WheelEffect(effect, time)
 
 
@@ -436,12 +309,12 @@ def wipe(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = WipeEffect(effect, time)
 
 
@@ -454,12 +327,12 @@ def slide(state, nargs, args):
     if not isinstance(effect, BaseEffect):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
-    
+
     time = parse_time(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
-    
+
     state.last_command_result = SlidingEffect(effect, time)
 
 # def music(state, nargs, args):
@@ -467,16 +340,18 @@ def slide(state, nargs, args):
 #     file = " ".join(args[1:])
 #     state.controller.set_effect(FFTEffect(file))
 
+
 def play_music(state, nargs, args):
     if nargs < 2:
         state.send(f"Format: {args[0]} FILENAME")
         return
 
     file = args[1]
-    
+
     if file == "spotify":
         try:
-            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = requests.get(
+                "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
             state.send(str(error))
@@ -489,10 +364,12 @@ def play_music(state, nargs, args):
         try:
             yt = pafy.new(file)
             audio_stream = yt.getbestaudio().url_https
-            
+
             node_input = ffmpeg.input(audio_stream)
-            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
-            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            node_output = node_input.output(
+                'pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args(
+                '-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
             process = node_output.run_async(pipe_stdout=True)
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
@@ -508,6 +385,7 @@ def play_music(state, nargs, args):
 
     state.last_command_result = PlayMusic(wavfile)
 
+
 def spectrum(state, nargs, args):
     if nargs < 3:
         state.send(f"Format: {args[0]} EFFECT FILENAME")
@@ -521,23 +399,27 @@ def spectrum(state, nargs, args):
     file = args[2]
     if file == "spotify":
         try:
-            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = requests.get(
+                "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
             state.send(str(error))
             state.send(f"Error loading spotify")
             return
-        state.last_command_result = SpectrumEffectStream(effect, audio_stream, playback=state.playback)
+        state.last_command_result = SpectrumEffectStream(
+            effect, audio_stream, playback=state.playback)
         return
 
     if file.startswith("https://"):
         try:
             yt = pafy.new(file)
             audio_stream = yt.getbestaudio().url_https
-            
+
             node_input = ffmpeg.input(audio_stream)
-            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
-            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            node_output = node_input.output(
+                'pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args(
+                '-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
             process = node_output.run_async(pipe_stdout=True)
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
@@ -553,6 +435,7 @@ def spectrum(state, nargs, args):
 
     state.last_command_result = SpectrumEffect(effect, wavfile, state.playback)
 
+
 def piano(state, nargs, args):
     if nargs < 3:
         state.send(f"Format: {args[0]} EFFECT FILENAME")
@@ -566,23 +449,27 @@ def piano(state, nargs, args):
     file = args[2]
     if file == "spotify":
         try:
-            audio_stream = requests.get("http://localhost:3000/stream", stream=True)
+            audio_stream = requests.get(
+                "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
             state.send(str(error))
             state.send(f"Error loading spotify")
             return
-        state.last_command_result = SpectrumEffectStream(effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
+        state.last_command_result = SpectrumEffectStream(
+            effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
         return
 
     if file.startswith("https://"):
         try:
             yt = pafy.new(file)
             audio_stream = yt.getbestaudio().url_https
-            
+
             node_input = ffmpeg.input(audio_stream)
-            node_output = node_input.output('pipe:', acodec='pcm_s16le', f='wav')
-            node_output = node_output.global_args('-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
+            node_output = node_input.output(
+                'pipe:', acodec='pcm_s16le', f='wav')
+            node_output = node_output.global_args(
+                '-hide_banner', '-nostats', '-loglevel', 'panic', '-nostdin')
             process = node_output.run_async(pipe_stdout=True)
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
@@ -596,12 +483,14 @@ def piano(state, nargs, args):
             state.send(f"Error {file} is not a valid FILENAME")
             return
 
-    state.last_command_result = SpectrumEffect(effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
+    state.last_command_result = SpectrumEffect(
+        effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
 
 
 def brightness(state, nargs, args):
     if (nargs == 2):
-        try: brightness = float(args[1])
+        try:
+            brightness = float(args[1])
         except:
             state.send("Invalid brightness")
             return
@@ -615,25 +504,31 @@ def brightness(state, nargs, args):
     state.pixels.brightness = brightness
     state.pixels.show()
 
+
 def pause(state, nargs, args):
     state.controller.pause()
 
+
 def resume(state, nargs, args):
     state.controller.resume()
+
 
 def stop(state, nargs, args):
     state.controller.stop()
     state.controller = None
 
+
 def restart(state, nargs, args):
     if state.controller is not None:
         state.controller.stop()
-    pixels = neopixel.NeoPixel(board.D10, 150, brightness=0.35, auto_write=False)
+    pixels = neopixel.NeoPixel(
+        board.D10, 150, brightness=0.35, auto_write=False)
     pixel_control = NeoPixelController(pixels, tps=60)
     state.controller = pixel_control
     state.pixels = pixels
     asyncio.create_task(pixel_control.run())
     # pixel_control.set_effect(ColorWipe(ColorAdapter(RainbowColorSelector()), 1))
+
 
 def get_colors(state, nargs, args):
     value = ""
@@ -641,19 +536,24 @@ def get_colors(state, nargs, args):
         value += color + "\n"
     state.send(value)
 
+
 def add_layer(state, nargs, args):
     state.controller.add_layer()
     state.send(f"Added new layer ({state.controller.num_layers()})")
-    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+    state.send(
+        f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
 
 def get_layer(state, nargs, args):
-    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+    state.send(
+        f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
 
 def set_layer(state, nargs, args):
     if (nargs < 2):
         state.send(f"Format: {args[0]} INDEX")
         return
-    
+
     index = 0
     try:
         index = int(args[1])
@@ -662,46 +562,44 @@ def set_layer(state, nargs, args):
         return
 
     state.controller.set_layer(index)
-    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+    state.send(
+        f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
 
 def clear_layer(state, nargs, args):
     state.controller.clear_layer()
     state.send(f"Cleared layer index {state.controller.current_layer()}")
 
+
 def reset_layers(state, nargs, args):
     state.controller.reset_layers()
     state.send(f"Reset layers")
+
 
 def delete_layer(state, nargs, args):
     old = state.controller.current_layer()
     state.controller.delete_layer()
     state.send(f"Deleted layer index {old}")
-    state.send(f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+    state.send(
+        f"Current layer index {state.controller.current_layer()} of {state.controller.num_layers()} layers")
+
 
 def change_merge(state, nargs, args):
     if nargs < 2:
         state.send(f"Format: {args[0]} BEHAVIOR")
         return
-    
+
     valid = state.controller.change_merge_behavior(args[1])
     if not valid:
         state.send(f"Error: {args[1]} is not a valid BEHAVIOR")
     else:
         state.send(f"Changed merge behavior to {args[1]}")
-    
+
 
 commands = [
-    Command("fill", fill, "EFFECT", 1),
-    Command("gradient", gradient, "EFFECT", 2),
-    Command("gradient3", gradient3, "EFFECT", 3),
-    Command("ngradient", ngradient, "EFFECT", 1),
-    Command("dgradient", dgradient, "EFFECT", 2),
-    Command("split", split, "EFFECT", 2),
-    Command("split3", split3, "EFFECT", 3),
-    Command("nsplit", nsplit, "EFFECT", 1),
-    Command("dsplit", dsplit, "EFFECT", 1),
+    Command("gradient", gradient, "EFFECT", -1),
+    Command("split", split, "EFFECT", -1),
     Command("rainbow", rainbow, "EFFECT", 0),
-    Command("redgreenblue", redgreenblue, "EFFECT", 0),
     Command("rgb", rgb, "EFFECT", 3),
     Command("hex", hex, "EFFECT", 1),
 
