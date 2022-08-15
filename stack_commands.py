@@ -530,10 +530,13 @@ def restart(state, nargs, args):
     # pixel_control.set_effect(ColorWipe(ColorAdapter(RainbowColorSelector()), 1))
 
 
-def get_colors(state, nargs, args):
-    value = ""
-    for color in colors.keys():
-        value += color + "\n"
+def get_vars(state, nargs, args):
+    value = "==========================\nVariables\n==========================\n"
+    max_len = 0
+    for var in state.vars:
+        max_len = max(max_len, len(var))
+    for var in state.vars:
+        value += f"{var + ':':<{max_len+2}}  {state.vars[var]}\n"
     state.send(value)
 
 
@@ -624,7 +627,7 @@ commands = [
     Command("resume", resume),
     Command("exit", stop),
     Command("restart", restart),
-    Command("colors", get_colors),
+    Command("vars", get_vars),
 
     Command("addlayer", add_layer),
     Command("getlayer", get_layer),
