@@ -1,5 +1,5 @@
 {
-    "scripts path": "/home/pi/Documents/LEDlights/scripts",
+    "scripts path": "./scripts",
     "vars": {
         "RED": "(rgb 255 0 0)",
         "GREEN": "(rgb 0 255 0)",

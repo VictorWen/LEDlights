@@ -1,21 +1,21 @@
 # Planned Features
 
-- [ ] Discord Bot integration
+- [X] Discord Bot integration
   - Use Discord to send bot commands
   - Use Discord to play music
 - [X] Stack Effects
   - ex: slide colorwipe rainbow
-- [ ] Function-like Commands
+- [X] Function-like Commands
   - ex: slide (colorwipe(fill (RED), 1), 1)
   - ex: rainbow
   - ex: fill(RED)
-- [ ] Command variables
+- [X] Command variables
   - ex: set var "slide colorwipe fill RED 1 1"
   - ex: $var
     - This is equivalent to calling "slide colorwipe fill RED 1 1"
   - ex: get var
     - This prints "slide colorwipe fill RED 1 1"
-- [ ] Dynamically create new colors
+- [X] Dynamically create new colors
   - ex: setcolor BuRGanDy 200 0 150
   - ex: fill BURGANDY
     - same as "rgb 200 0 150"
@@ -38,7 +38,7 @@
   - Positioning Effects
     - [ ] Cut
       - Select only a piece of the colors to display
-    - [ ] Offset
+    - [X] Offset
       - Move the colors to a position in the strip
       - Should be used with "cut"
     - [ ] Center
@@ -49,7 +49,7 @@
   - Color Effects
     - [ ] GetLayer effect
       - Take colors from specified layer
-    - [ ] Define colors in file
+    - [X] Define colors in file
       - ex: colors_config.txt
         - BURGANDY 90 0 70
         - BLONDE 120 120 30
@@ -58,10 +58,11 @@
     - [ ] Contrast Effect
   - Animation Effects
     - [ ] Particle Collider
-- Controller System Calls
+<!-- - Controller System Calls
   - [ ] Change Effect
-  - [ ] Get layer's colors
+  - [ ] Get layer's colors -->
 - [ ] Cleanly exit wait
 - [ ] Help command
   - "help" lists all commands
   - "help [CMD]" gets the help information of CMD command
+    - Requires refactor of stack command object

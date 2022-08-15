@@ -1,4 +1,5 @@
 from effects import *
+from positional_effects import *
 from colors import *
 import asyncio
 from music_effects import *
@@ -64,11 +65,21 @@ def parse_rgb_color(r, g, b):
     return None
 
 
-def parse_time(time):
+def parse_nonzero_float(num):
     try:
-        time = float(time)
-        if time != 0:
-            return time
+        num = float(num)
+        if num != 0:
+            return num
+    except:
+        pass
+    return None
+
+
+def parse_nonzero_int(num):
+    try:
+        num = int(num)
+        if num != 0:
+            return num
     except:
         pass
     return None
@@ -99,7 +110,7 @@ class Command:
 def gradient(state, nargs, args):
     if nargs < 3:
         raise Exception(
-            f"Format: {args[0]} EFFECT(1) EFFECT(2) ... EFFECT(N) <[WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]>")
+            f"Format: {args[0]} EFFECT(1) EFFECT(2) <... EFFECT(N)> <[WEIGHT(1) WEIGHT(2) ... WEIGHT(N)]>")
 
     if isinstance(args[-1], BaseEffect):
         color_effects = args[1:]
@@ -130,8 +141,9 @@ def gradient(state, nargs, args):
 
 
 def split(state, nargs, args):
-    if nargs < 2:
-        raise Exception(f"Format: {args[0]} EFFECT(1) EFFECT(2) ... EFFECT(N)")
+    if nargs < 3:
+        raise Exception(
+            f"Format: {args[0]} EFFECT(1) EFFECT(2) <... EFFECT(N)>")
 
     color_effects = args[1:]
     for effect in color_effects:
@@ -139,6 +151,27 @@ def split(state, nargs, args):
             raise Exception(f"Invalid EFFECT {effect}")
 
     state.last_command_result = DynamicSplit(color_effects)
+
+
+def size(state, nargs, args):
+    if nargs < 3 or nargs > 4:
+        raise Exception(f"Format: {args[0]} EFFECT SIZE OFFSET")
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+
+    size = parse_nonzero_int(args[2])
+    if size is None:
+        raise Exception(f'Error {args[2]} is not a valid SIZE')
+
+    offset = 0
+    if nargs == 4:
+        offset = parse_nonzero_int(args[3])
+        if offset is None:
+            raise Exception(f'Error {args[3]} is not a valid OFFSET')
+
+    state.last_command_result = SizeEffect(effect, size, offset)
 
 
 def rainbow(state, nargs, args):
@@ -179,7 +212,7 @@ def blink(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -197,7 +230,7 @@ def color_wipe(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -215,7 +248,7 @@ def fade_in(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -233,7 +266,7 @@ def fade_out(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -251,7 +284,7 @@ def blink_fade(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -269,12 +302,12 @@ def wave(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid PERIOD')
         return
 
-    length = parse_time(args[3])
+    length = parse_nonzero_float(args[3])
     if (time is None):
         state.send(f'Error {args[3]} is not a valid WAVELENGTH')
         return
@@ -292,7 +325,7 @@ def wheel(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -310,7 +343,7 @@ def wipe(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -328,7 +361,7 @@ def slide(state, nargs, args):
         state.send(f'Error {args[1]} is not a valid EFFECT')
         return
 
-    time = parse_time(args[2])
+    time = parse_nonzero_float(args[2])
     if (time is None):
         state.send(f'Error {args[2]} is not a valid TIME')
         return
@@ -602,6 +635,8 @@ commands = [
     Command("rainbow", rainbow, "EFFECT", 0),
     Command("rgb", rgb, "EFFECT", 3),
     Command("hex", hex, "EFFECT", 1),
+
+    Command("size", size, "EFFECT", 4),
 
     Command("blink", blink, "EFFECT", 2),
     Command("colorwipe", color_wipe, "EFFECT", 2),

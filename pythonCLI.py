@@ -395,8 +395,12 @@ class CommandEvaluator():
 
         if len(object_node.children) == 1:
             return await self.evaluate(primary)
-        elif obj_type not in [KEYWORD_NODE, COMMAND_NODE]:
+        elif obj_type not in [KEYWORD_NODE, COMMAND_NODE, OBJECT_NODE]:
             raise Exception("Non command-like objects cannot have arguments")
+        elif obj_type == OBJECT_NODE:
+            children = object_node.children[1:]
+            primary.children += children
+            return await self.eval_object(primary)
         else:
             eval_args = [obj_value]
             for child in object_node.children[1:]:
