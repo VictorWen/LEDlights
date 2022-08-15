@@ -11,39 +11,6 @@ import pafy
 import ffmpeg
 import requests
 
-colors = {
-    "RED": (255, 0, 0),
-    "GREEN": (0, 255, 0),
-    "BLUE": (0, 0, 255),
-    "YELLOW": (255, 255, 0),
-    "CYAN": (0, 255, 255),
-    "PURPLE": (255, 0, 255),
-    "VIOLET": (255, 0, 255),
-    "WHITE": (255, 255, 255),
-    "PINK": (255, 64, 64),
-    "ORANGE": (255, 64, 0),
-    "MAGENTA": (255, 0, 64),
-    "LIGHT_GREEN": (64, 255, 64),
-    "LIME": (64, 255, 0),
-    "AQUAMARINE": (0, 255, 64),
-    "AQUA": (0, 64, 255),
-    "INDIGO": (64, 0, 255),
-    "LIGHT_BLUE": (64, 64, 255),
-    "BLACK": (0, 0, 0),
-    "CLEAR": (-1, -1, -1),
-    "HOT_PINK": (255, 20, 64)
-}
-
-
-def colorname_to_color(colorname):
-    try:
-        if colorname in colors:
-            return colors[colorname]
-    except:
-        pass
-    print(f"Error: {colorname} is not a valid COLOR")
-    return None
-
 
 def hexstring_to_rgb(hex):
     hex = hex.strip('#')
