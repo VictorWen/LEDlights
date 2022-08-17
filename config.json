@@ -20,6 +20,10 @@
         "LIGHT_BLUE": "(rgb 64 64 255)",
         "BLACK": "(rgb 0 0 0)",
         "CLEAR": "(rgb -1 -1 -1)",
-        "HOT_PINK": "(rgb 255 20 64)"
+        "HOT_PINK": "(rgb 255 20 64)",
+        "OVERWRITE": "\"OVERWRITE\"",
+        "ADD": "\"ADD\"",
+        "BLEND": "\"BLEND\"",
+        "MULTIPLY": "\"MULTIPLY\""
     }
 }

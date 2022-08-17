@@ -1,23 +1,18 @@
-read scripts/transition.txt
+read "transition.txt"
 
-read scripts/startup.txt
-wait 10
-
-read scripts/transition.txt
-
-read scripts/electric_rainbow.txt
+read "electric_rainbow.txt"
 wait 40
 
-read scripts/transition.txt
+read "transition.txt"
 
-read scripts/smash.txt
+read "smash.txt"
 wait 40
 
-read scripts/transition.txt
+read "transition.txt"
 
-read scripts/battle.txt
+read "battle.txt"
 wait 10
 
-read scripts/transition.txt
+read "transition.txt"
 
-read scripts/color_dance.txt
+read "color_dance.txt"

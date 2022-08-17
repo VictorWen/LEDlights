@@ -1,10 +1,10 @@
 resetlayers
 changemerge BLEND
 
-blinkfade wave ngradient "PURPLE CLEAR" 11 30 3
+blinkfade (wave (gradient PURPLE CLEAR) 11 30) 3
 
 addlayer
-blinkfade wave ngradient "INDIGO AQUA CLEAR AQUA" -13 75 5
+blinkfade (wave (gradient INDIGO AQUA CLEAR AQUA) -13 75) 5
 
 addlayer
-blinkfade wave ngradient "LIGHT_GREEN CYAN AQUAMARINE" 17 150 7
+blinkfade (wave (gradient LIGHT_GREEN CYAN AQUAMARINE) 17 150) 7

@@ -25,7 +25,7 @@ def parse_rgb_color(r, g, b):
         r = int(r)
         g = int(g)
         b = int(b)
-        if (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
+        if (-1 <= r <= 255 and -1 <= g <= 255 and -1 <= b <= 255):
             return (r, g, b)
     except:
         pass
@@ -147,204 +147,169 @@ def rainbow(state, nargs, args):
 
 def rgb(state, nargs, args):
     if (nargs < 4):
-        state.send(f"Format: {args[0]} R G B")
-        return
+        raise Exception(f"Format: {args[0]} R G B")
 
     rgb = parse_rgb_color(args[1], args[2], args[3])
     if (rgb is None):
-        state.send(
+        raise Exception(
             f"Error: ({args[1]}, {args[2]}, {args[3]}) is not a valid RGB Color")
-        return None
+
     state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
 
 def hex(state, nargs, args):
     if (nargs < 2):
-        state.send(f"Format: {args[0]} HEX")
-        return
+        raise Exception(f"Format: {args[0]} HEX")
+        
     rgb = hexstring_to_rgb(args[1])
     if (rgb is None):
-        state.send(f"Error: {args[1]} is not a valid hex color")
-        return None
+        raise Exception(f"Error: {args[1]} is not a valid hex color")
+        
     state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
 
 def blink(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = BlinkEffect(effect, time)
 
 
 def color_wipe(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = ColorWipe(effect, time)
 
 
 def fade_in(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = FadeIn(effect, time)
 
 
 def fade_out(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = FadeOut(effect, time)
 
 
 def blink_fade(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = BlinkFade(effect, time)
 
 
 def wave(state, nargs, args):
     if (nargs < 4):
-        state.send(f"Format: {args[0]} EFFECT PERIOD WAVELENGTH")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT PERIOD WAVELENGTH")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid PERIOD')
-        return
+        raise Exception(f'Error {args[2]} is not a valid PERIOD')
 
     length = parse_nonzero_float(args[3])
     if (time is None):
-        state.send(f'Error {args[3]} is not a valid WAVELENGTH')
-        return
+        raise Exception(f'Error {args[3]} is not a valid WAVELENGTH')
 
     state.last_command_result = WaveEffect(effect, time, length)
 
 
 def wheel(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = WheelEffect(effect, time)
 
 
 def wipe(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = WipeEffect(effect, time)
 
 
 def slide(state, nargs, args):
     if (nargs < 3):
-        state.send(f"Format: {args[0]} EFFECT TIME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT TIME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        state.send(f'Error {args[2]} is not a valid TIME')
-        return
+        raise Exception(f'Error {args[2]} is not a valid TIME')
 
     state.last_command_result = SlidingEffect(effect, time)
-
-# def music(state, nargs, args):
-#     # multiplier = float(args[1])
-#     file = " ".join(args[1:])
-#     state.controller.set_effect(FFTEffect(file))
 
 
 def play_music(state, nargs, args):
     if nargs < 2:
-        state.send(f"Format: {args[0]} FILENAME")
-        return
+        raise Exception(f"Format: {args[0]} FILENAME")
 
     file = args[1]
 
@@ -354,9 +319,9 @@ def play_music(state, nargs, args):
                 "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
-            state.send(str(error))
-            state.send(f"Error loading spotify")
-            return
+            # raise Exception(str(error))
+            raise Exception(f"Error loading spotify")
+            
         state.last_command_result = PlayMusicStream(audio_stream)
         return
 
@@ -373,28 +338,25 @@ def play_music(state, nargs, args):
             process = node_output.run_async(pipe_stdout=True)
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
-            state.send(str(error))
-            state.send(f"Error loading {file} from youtube")
-            return
+            raise Exception(str(error))
+            # raise Exception(f"Error loading {file} from youtube")
+            
     else:
         try:
             wavfile = wav.open(file, 'rb')
         except:
-            state.send(f"Error {file} is not a valid FILENAME")
-            return
+            raise Exception(f"Error {file} is not a valid FILENAME")
 
     state.last_command_result = PlayMusic(wavfile)
 
 
 def spectrum(state, nargs, args):
     if nargs < 3:
-        state.send(f"Format: {args[0]} EFFECT FILENAME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT FILENAME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     file = args[2]
     if file == "spotify":
@@ -403,9 +365,9 @@ def spectrum(state, nargs, args):
                 "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
-            state.send(str(error))
-            state.send(f"Error loading spotify")
-            return
+            # raise Exception(str(error))
+            raise Exception(f"Error loading spotify")
+            
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback)
         return
@@ -424,27 +386,24 @@ def spectrum(state, nargs, args):
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
             print(error)
-            state.send(f"Error loading {file} from youtube")
-            return
+            raise Exception(f"Error loading {file} from youtube")
+            
     else:
         try:
             wavfile = wav.open(file, 'rb')
         except:
-            state.send(f"Error {file} is not a valid FILENAME")
-            return
+            raise Exception(f"Error {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(effect, wavfile, state.playback)
 
 
 def piano(state, nargs, args):
     if nargs < 3:
-        state.send(f"Format: {args[0]} EFFECT FILENAME")
-        return
+        raise Exception(f"Format: {args[0]} EFFECT FILENAME")  
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        state.send(f'Error {args[1]} is not a valid EFFECT')
-        return
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
 
     file = args[2]
     if file == "spotify":
@@ -453,9 +412,9 @@ def piano(state, nargs, args):
                 "http://localhost:3000/stream", stream=True)
             audio_stream = audio_stream.raw
         except BaseException as error:
-            state.send(str(error))
-            state.send(f"Error loading spotify")
-            return
+            # raise Exception(str(error))
+            raise Exception(f"Error loading spotify")
+            
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
         return
@@ -474,14 +433,13 @@ def piano(state, nargs, args):
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
             print(error)
-            state.send(f"Error loading {file} from youtube")
-            return
+            raise Exception(f"Error loading {file} from youtube")
+            
     else:
         try:
             wavfile = wav.open(file, 'rb')
         except:
-            state.send(f"Error {file} is not a valid FILENAME")
-            return
+            raise Exception(f"Error {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(
         effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
@@ -492,14 +450,13 @@ def brightness(state, nargs, args):
         try:
             brightness = float(args[1])
         except:
-            state.send("Invalid brightness")
-            return
+            raise Exception("Invalid brightness")
+            
         if (brightness < 0 or brightness > 1):
-            state.send("Invalid brightness")
-            return
+            raise Exception("Invalid brightness")
+            
     else:
-        state.send(f"Format: {args[0]} value")
-        return
+        raise Exception(f"Format: {args[0]} value")
 
     state.pixels.brightness = brightness
     state.pixels.show()
@@ -527,7 +484,6 @@ def restart(state, nargs, args):
     state.controller = pixel_control
     state.pixels = pixels
     asyncio.create_task(pixel_control.run())
-    # pixel_control.set_effect(ColorWipe(ColorAdapter(RainbowColorSelector()), 1))
 
 
 def get_vars(state, nargs, args):
@@ -554,15 +510,13 @@ def get_layer(state, nargs, args):
 
 def set_layer(state, nargs, args):
     if (nargs < 2):
-        state.send(f"Format: {args[0]} INDEX")
-        return
+        raise Exception(f"Format: {args[0]} INDEX")
 
     index = 0
     try:
         index = int(args[1])
     except:
-        state.send(f"Error: {args[1]} is not a valid INDEX")
-        return
+        raise Exception(f"Error: {args[1]} is not a valid INDEX")
 
     state.controller.set_layer(index)
     state.send(
@@ -589,12 +543,11 @@ def delete_layer(state, nargs, args):
 
 def change_merge(state, nargs, args):
     if nargs < 2:
-        state.send(f"Format: {args[0]} BEHAVIOR")
-        return
+        raise Exception(f"Format: {args[0]} BEHAVIOR")
 
     valid = state.controller.change_merge_behavior(args[1])
     if not valid:
-        state.send(f"Error: {args[1]} is not a valid BEHAVIOR")
+        raise Exception(f"Error: {args[1]} is not a valid BEHAVIOR")
     else:
         state.send(f"Changed merge behavior to {args[1]}")
 

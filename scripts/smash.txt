@@ -1,4 +1,4 @@
 resetlayers
-slide colorwipe split RED CLEAR 30 5
+slide (colorwipe (split RED CLEAR) 30) 5
 addlayer
-slide colorwipe split CLEAR BLUE -30 -5
+slide (colorwipe (split CLEAR BLUE) -30) -5

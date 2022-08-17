@@ -1,2 +1,3 @@
 resetlayers
+brightness 1
 slide (colorwipe rainbow 10) 10
