@@ -7,7 +7,7 @@ let FadeGreen = (fadeout (gradient GREEN CLEAR) 3)
 let FadeBlue = (fadeout (gradient BLUE CLEAR) 3)
 let FadePurple = (fadeout (gradient PURPLE CLEAR) 3)
 
-let SparkParticle = particle [FadeRed FadeOrange] (pbody -20 25 -10) 0.5 3.5 (pbody 20 15 -10) 1
+let SparkParticle = particle [FadeRed] (pbody -20 25 -10) 0.5 3.5 (pbody 20 15 -10) 1
 
 let Firework = emitter FireworkParticle SparkParticle 25 3.5
 let ShooterParticle = particle [PURPLE] (pbody 3)

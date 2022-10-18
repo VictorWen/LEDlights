@@ -11,6 +11,7 @@ import wave as wav
 import pafy
 import ffmpeg
 import requests
+from config import config
 
 
 def hexstring_to_rgb(hex):
@@ -349,7 +350,7 @@ def play_music(state, nargs, args):
 
     else:
         try:
-            wavfile = wav.open(file, 'rb')
+            wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
             raise Exception(f"Error {file} is not a valid FILENAME")
 
@@ -396,7 +397,7 @@ def spectrum(state, nargs, args):
 
     else:
         try:
-            wavfile = wav.open(file, 'rb')
+            wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
             raise Exception(f"Error {file} is not a valid FILENAME")
 
@@ -443,7 +444,7 @@ def piano(state, nargs, args):
 
     else:
         try:
-            wavfile = wav.open(file, 'rb')
+            wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
             raise Exception(f"Error {file} is not a valid FILENAME")
 
