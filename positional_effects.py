@@ -17,3 +17,6 @@ class SizeEffect(BaseEffect):
         N = len(pixels)
         for i in range(0, self.size):
             pixels[(i + self.offset) % N] = colors[i]
+    
+    def clone(self):
+        return SizeEffect(self.effect, self.size, self.offset)

@@ -12,7 +12,7 @@ def merge_layers(layers, merge_behavior="OVERWRITE"):
     for i in range(len(layers[0])):
         if layers[0][i] == (-1, -1, -1):
             result[i] = (0, 0, 0)
-    
+
     for i in range(1, len(layers)):
         layer = layers[i]
         for j in range(len(layer)):
@@ -35,18 +35,20 @@ class NeoPixelController:
         self.delay = 1/tps
         self.paused = False
         self.pixels = pixels
-        
+
         self.running = False
 
         self.N = len(pixels)
 
-        self.layers=[clone_pixels(pixels)]
+        self.layers = [clone_pixels(pixels)]
         self.layer_index = 0
 
         self.effects = [None]
         self.merge_behavior = "OVERWRITE"
 
     def set_effect(self, effect: BaseEffect):
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"{effect} is not a valid effect")
         self.effects[self.layer_index] = effect
 
     def resume(self):
@@ -64,13 +66,14 @@ class NeoPixelController:
         self.paused = False
 
     def add_layer(self):
-        self.layers.insert(self.layer_index + 1, [(-1, -1, -1) for i in range(self.N)])
+        self.layers.insert(self.layer_index + 1,
+                           [(-1, -1, -1) for i in range(self.N)])
         self.effects.insert(self.layer_index + 1, None)
         self.layer_index = self.layer_index + 1
 
     def num_layers(self):
         return len(self.layers)
-    
+
     def current_layer(self):
         return self.layer_index
 
@@ -87,7 +90,7 @@ class NeoPixelController:
     def clear_layer(self):
         self.layers[self.layer_index] = [(-1, -1, -1) for i in range(self.N)]
         self.effects[self.layer_index] = None
-    
+
     def reset_layers(self):
         self.layers = [[(-1, -1, -1) for i in range(self.N)]]
         self.effects = [None]
@@ -118,20 +121,20 @@ class NeoPixelController:
             if ((datetime.datetime.now() - timer).total_seconds() < self.delay):
                 await asyncio.sleep(0.001)
                 continue
-            
+
             prev_timer = timer
             timer = datetime.datetime.now()
             for i in range(self.num_layers()):
                 layer = self.layers[i]
                 effect = self.effects[i]
-                
+
                 if (effect is None):
                     continue
-                
+
                 elif (effect.type == STATIC):
                     effect.tick(layer, 0)
                     self.effects[i] = None
-                
+
                 elif (effect.type == DYNAMIC):
                     time_delta = datetime.datetime.now() - prev_timer
                     effect.tick(layer, time_delta.total_seconds())
@@ -143,4 +146,3 @@ class NeoPixelController:
             self.pixels.show()
 
             await asyncio.sleep(0.001)
-           

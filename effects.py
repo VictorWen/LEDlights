@@ -1,3 +1,4 @@
+from copy import deepcopy
 import math
 from color_utils import *
 
@@ -44,6 +45,9 @@ class BaseEffect:
     def tick(self, pixels, time_delta):
         pass
 
+    def clone(self):
+        raise NotImplementedError(f"{self}.clone() is not implemented yet")
+
 
 class ColorAdapter(BaseEffect):
     def __init__(self, color_selector):
@@ -54,6 +58,9 @@ class ColorAdapter(BaseEffect):
         n = len(pixels)
         for i in range(n):
             pixels[i] = self.color.get_color(i/n)
+
+    def clone(self):
+        return ColorAdapter(self.color_selector)
 
 
 class DynamicSplit(BaseEffect):
@@ -77,6 +84,9 @@ class DynamicSplit(BaseEffect):
             self.effects[i].tick(color, time_delta)
             pixels[left:int(right)] = color
             left = int(right)
+
+    def clone(self):
+        return DynamicsSplit(self.effects)
 
 
 class DynamicGradient(BaseEffect):
@@ -126,6 +136,9 @@ class DynamicGradient(BaseEffect):
                 pixels[i] = tuple(
                     int(colors[j][k] + (value - j) * differences[j][k]) for k in range(3))
 
+    def clone(self):
+        return DynamicGradient(self.effects, self.weights)
+
 
 class BlinkEffect(BaseEffect):
     def __init__(self, color, time_length):
@@ -149,6 +162,9 @@ class BlinkEffect(BaseEffect):
             scalar_mult_fill(1, colors)
 
         set_pixels(pixels, colors)
+
+    def clone(self):
+        return BlinkEffect(self.color, self.time_length)
 
 
 class ColorWipe(BaseEffect):
@@ -181,6 +197,9 @@ class ColorWipe(BaseEffect):
                 else:
                     pixels[i] = self.original[i]
 
+    def clone(self):
+        return ColorWipe(self.color, self.time_length)
+
 
 class FadeIn(BaseEffect):
     def __init__(self, color, time_length):
@@ -196,6 +215,9 @@ class FadeIn(BaseEffect):
         self.time_sum += time_delta
         scalar_mult_fill(min(1, self.time_sum/self.time_length), colors)
         set_pixels(pixels, colors)
+
+    def clone(self):
+        return FadeIn(self.color, self.time_length)
 
 
 class FadeOut(BaseEffect):
@@ -213,6 +235,9 @@ class FadeOut(BaseEffect):
         scalar_mult_fill(max(0, self.time_sum/self.time_length), colors)
         set_pixels(pixels, colors)
 
+    def clone(self):
+        return FadeOut(self.color, self.time_length)
+
 
 class BlinkFade(BaseEffect):
     def __init__(self, color, time_length):
@@ -229,6 +254,9 @@ class BlinkFade(BaseEffect):
         scalar_mult_fill(
             (math.sin(self.time_sum/self.time_length * math.pi) + 1) / 2, colors)
         set_pixels(pixels, colors)
+
+    def clone(self):
+        return BlinkFade(self.color, self.time_length)
 
 
 class WaveEffect(BaseEffect):
@@ -252,6 +280,9 @@ class WaveEffect(BaseEffect):
             value = (1 + math.sin(phase)) / 2
             pixels[i] = colors[int(value * (n - 1))]
 
+    def clone(self):
+        return WaveEffect(self.color, self.period, self.wavelength)
+
 
 class WheelEffect(BaseEffect):
     def __init__(self, color, period):
@@ -273,6 +304,9 @@ class WheelEffect(BaseEffect):
         for i in range(n):
             pixels[i] = colors[int(value * (n - 1))]
 
+    def clone(self):
+        return WheelEffect(self.color, self.period)
+
 
 class WipeEffect(BaseEffect):
     def __init__(self, color, period):
@@ -291,6 +325,9 @@ class WipeEffect(BaseEffect):
         offset = int((self.time_sum / self.period) * n)
         for i in range(n):
             pixels[i] = colors[offset % n]
+
+    def clone(self):
+        return WipeEffect(self.color, self.period)
 
 
 class SlidingEffect(BaseEffect):
@@ -313,38 +350,5 @@ class SlidingEffect(BaseEffect):
         for i in range(n):
             pixels[i] = colors[(i - offset) % n]
 
-
-class Wave(BaseEffect):
-    def __init__(self, color1, color2, time_length, length):
-        super().__init__(type=DYNAMIC)
-        self.color1 = color1
-        self.color2 = color2
-        self.time_length = time_length
-        self.length = length
-        self.time_sum = 0
-        self.color_diff = tuple(color2[i] - color1[i] for i in range(3))
-
-    def tick(self, pixels, time_delta):
-        self.time_sum += time_delta
-        for i in range(len(pixels)):
-            value = (math.sin((i / self.length - self.time_sum /
-                     self.time_length) * math.pi) + 1) / 2
-            color = tuple(
-                int(self.color1[j] + value * self.color_diff[j]) for j in range(3))
-            pixels[i] = color
-
-
-class RainbowWave(BaseEffect):
-    def __init__(self, time_length, length):
-        super().__init__(type=DYNAMIC)
-        self.time_length = time_length
-        self.length = length
-        self.time_sum = 0
-
-    def tick(self, pixels, time_delta):
-        self.time_sum += time_delta
-        for i in range(len(pixels)):
-            value = (math.sin((i / self.length - self.time_sum /
-                     self.time_length) * math.pi) + 1) / 2
-            color = rainbow(value)
-            pixels[i] = color
+    def clone(self):
+        return SlidingEffect(self.color, self.period)

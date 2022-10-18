@@ -11,6 +11,11 @@ def set_pixels(pixels, colors):
         pixels[i] = colors[i]
 
 
+def fill_pixels(pixels, color):
+    for i in range(len(pixels)):
+        pixels[i] = color
+
+
 def scalar_mult(scalar, color):
     return tuple(int(scalar * color[i]) for i in range(3))
 

@@ -1,0 +1,15 @@
+let FireworkParticle = particle [(gradient RED (rgb 128 32 0) CLEAR)] (pbody 0 75 -28) 0.25 3.5 (pbody 0 83 -28) 0.35
+
+let FadeRed = (fadeout (gradient RED CLEAR) 3)
+let FadeOrange = (fadeout (gradient ORANGE CLEAR) 3)
+let FadeYellow = (fadeout (gradient YELLOW CLEAR) 3)
+let FadeGreen = (fadeout (gradient GREEN CLEAR) 3)
+let FadeBlue = (fadeout (gradient BLUE CLEAR) 3)
+let FadePurple = (fadeout (gradient PURPLE CLEAR) 3)
+
+let SparkParticle = particle [FadeRed FadeOrange] (pbody -20 25 -10) 0.5 3.5 (pbody 20 15 -10) 1
+
+let Firework = emitter FireworkParticle SparkParticle 25 3.5
+let ShooterParticle = particle [PURPLE] (pbody 3)
+let Shooter = emitter ShooterParticle Firework 1 7
+Shooter

@@ -1,4 +1,5 @@
 from effects import *
+from physics_effects import ParticleEffect, ParticleEmitter, PhysicsBody
 from positional_effects import *
 from colors import *
 import asyncio
@@ -28,8 +29,7 @@ def parse_rgb_color(r, g, b):
         if (-1 <= r <= 255 and -1 <= g <= 255 and -1 <= b <= 255):
             return (r, g, b)
     except:
-        pass
-    return None
+        return None
 
 
 def parse_nonzero_float(num):
@@ -38,8 +38,7 @@ def parse_nonzero_float(num):
         if num != 0:
             return num
     except:
-        pass
-    return None
+        return None
 
 
 def parse_nonzero_int(num):
@@ -48,8 +47,15 @@ def parse_nonzero_int(num):
         if num != 0:
             return num
     except:
-        pass
-    return None
+        return None
+
+
+def parse_float(num):
+    try:
+        num = float(num)
+        return num
+    except:
+        return None
 
 
 class State:
@@ -160,11 +166,11 @@ def rgb(state, nargs, args):
 def hex(state, nargs, args):
     if (nargs < 2):
         raise Exception(f"Format: {args[0]} HEX")
-        
+
     rgb = hexstring_to_rgb(args[1])
     if (rgb is None):
         raise Exception(f"Error: {args[1]} is not a valid hex color")
-        
+
     state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
 
@@ -321,7 +327,7 @@ def play_music(state, nargs, args):
         except BaseException as error:
             # raise Exception(str(error))
             raise Exception(f"Error loading spotify")
-            
+
         state.last_command_result = PlayMusicStream(audio_stream)
         return
 
@@ -340,7 +346,7 @@ def play_music(state, nargs, args):
         except BaseException as error:
             raise Exception(str(error))
             # raise Exception(f"Error loading {file} from youtube")
-            
+
     else:
         try:
             wavfile = wav.open(file, 'rb')
@@ -367,7 +373,7 @@ def spectrum(state, nargs, args):
         except BaseException as error:
             # raise Exception(str(error))
             raise Exception(f"Error loading spotify")
-            
+
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback)
         return
@@ -387,7 +393,7 @@ def spectrum(state, nargs, args):
         except BaseException as error:
             print(error)
             raise Exception(f"Error loading {file} from youtube")
-            
+
     else:
         try:
             wavfile = wav.open(file, 'rb')
@@ -399,7 +405,7 @@ def spectrum(state, nargs, args):
 
 def piano(state, nargs, args):
     if nargs < 3:
-        raise Exception(f"Format: {args[0]} EFFECT FILENAME")  
+        raise Exception(f"Format: {args[0]} EFFECT FILENAME")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
@@ -414,7 +420,7 @@ def piano(state, nargs, args):
         except BaseException as error:
             # raise Exception(str(error))
             raise Exception(f"Error loading spotify")
-            
+
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
         return
@@ -434,7 +440,7 @@ def piano(state, nargs, args):
         except BaseException as error:
             print(error)
             raise Exception(f"Error loading {file} from youtube")
-            
+
     else:
         try:
             wavfile = wav.open(file, 'rb')
@@ -445,16 +451,111 @@ def piano(state, nargs, args):
         effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
 
 
+def pbody(state, nargs, args):
+    if nargs not in [2, 3, 4]:
+        raise Exception(
+            f"Format: {args[0]} POSITION <VELOCITY> <ACCELERATION>")
+
+    pos = parse_float(args[1])
+    if pos is None:
+        raise Exception(f"Error: {pos} is an invalid POSITION")
+
+    vel = 0
+    if nargs >= 3:
+        vel = parse_float(args[2])
+        if vel is None:
+            raise Exception(f"Error: {vel} is an invalid VELOCITY")
+
+    acc = 0
+    if nargs >= 4:
+        acc = parse_float(args[3])
+        if acc is None:
+            raise Exception(f"Error: {acc} is an invalid ACCELERATION")
+
+    state.last_command_result = PhysicsBody(pos, vel, acc)
+
+
+def particle(state, nargs, args):
+    if nargs < 3 or nargs > 8:
+        raise Exception(f"Format: {args[0]} [EFFECT] PBODY <RADIUS> <DECAY> <PBODY_MAX> <RADIUS_MAX> <DECAY_MAX>")
+
+    effects = args[1]
+    if not isinstance(effects, list):
+        raise Exception(f"Error {args[1]} is not a list of effects")
+    for effect in effects:
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"Error {args[1]} is not a list of effects, {effect} is not a valid effect")
+
+    pbodyA = args[2]
+    if not isinstance(pbodyA, PhysicsBody):
+        raise Exception(f'Error {pbodyA} is not a valid PBODY')
+
+    radiusA = 0
+    if nargs >= 4:
+        radiusA = parse_float(args[3])
+        if radiusA is None:
+            raise Exception(f"Error {args[3]} is not a valid RADIUS")
+
+    decayA = 0
+    if nargs >= 5:
+        decayA = parse_float(args[4])
+        if decayA is None:
+            raise Exception(f"Error {args[4]} is not a valid DECAY")
+
+    pbodyB = None
+    if nargs >= 6:
+        pbodyB = args[5]
+        if not isinstance(pbodyB, PhysicsBody):
+            raise Exception(f'Error {pbodyB} is not a valid PBODY_MAX')
+
+    radiusB = None
+    if nargs >= 7:
+        radiusB = parse_float(args[6])
+        if radiusB is None:
+            raise Exception(f"Error {args[6]} is not a valid RADIUS_MAX")
+
+    decayB = None
+    if nargs >= 8:
+        decayB = parse_float(args[7])
+        if decayB is None:
+            raise Exception(f"Error {args[7]} is not a valid DECAY_MAX")
+
+    state.last_command_result = ParticleEffect(effects, pbodyA, radiusA, decayA, pbodyB, radiusB, decayB)
+
+
+def emitter(state, nargs, args):
+    if nargs != 5:
+        raise Exception(f"Format: {args[0]} PARTICLE EMISSION DENSITY FUSE")
+
+    particle = args[1]
+    if not isinstance(particle, ParticleEffect):
+        raise Exception(f"Error {particle} is not a valid PARTICLE")
+    
+    emission = args[2]
+    if not isinstance(emission, ParticleEffect):
+        raise Exception(f"Error {emission} is not a valid EMISSION, must be a particle")
+    
+    density = parse_nonzero_int(args[3])
+    if density is None or density <= 0:
+        raise Exception(f"Error {args[3]} is not a valid DENSITY, must be a positive number")
+    
+    fuse = parse_float(args[4])
+    if fuse is None or fuse <= 0:
+        raise Exception(f"Error {args[4]} is not a valid FUSE, must be a positive number")
+
+    state.last_command_result = ParticleEmitter(particle, emission, density, fuse)
+
+
 def brightness(state, nargs, args):
     if (nargs == 2):
         try:
             brightness = float(args[1])
         except:
             raise Exception("Invalid brightness")
-            
+
         if (brightness < 0 or brightness > 1):
             raise Exception("Invalid brightness")
-            
+
     else:
         raise Exception(f"Format: {args[0]} value")
 
@@ -479,7 +580,7 @@ def restart(state, nargs, args):
     if state.controller is not None:
         state.controller.stop()
     pixels = neopixel.NeoPixel(
-        board.D10, 150, brightness=0.35, auto_write=False)
+        board.D10, 300, brightness=0.35, auto_write=False)
     pixel_control = NeoPixelController(pixels, tps=60)
     state.controller = pixel_control
     state.pixels = pixels
@@ -574,6 +675,10 @@ commands = [
     Command("playmusic", play_music, "EFFECT", 1),
     Command("spectrum", spectrum, "EFFECT", 2),
     Command("piano", piano, "EFFECT", 2),
+
+    Command("pbody", pbody, "EFFECT", 4),
+    Command("particle", particle, "EFFECT", 3),
+    Command("emitter", emitter, "EFFECT", 10),
 
     Command("brightness", brightness, n_args=1),
     Command("pause", pause),

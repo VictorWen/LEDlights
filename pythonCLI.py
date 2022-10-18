@@ -109,6 +109,8 @@ class StackCLI:
     async def parse_queue(self):
         while not self.queueing and len(self.queue) > 0:
             input_str = self.queue.pop(0)
+            if input_str.startswith("#"):
+                continue
             tokens = tokenize(input_str)
             parsed_input = self.parser.parse(tokens)
             self.state.last_command_result = None
