@@ -1,16 +1,13 @@
-from effects import *
+from effects.effects import *
 from neopixel_controller import *
 import asyncio
-import os
 import board
 import neopixel
 from pythonCLI import *
-# from commands import commands, State
 from stack_commands import commands, State
 from colors import *
 import sys
-# import discord_comms as dc
-from music_effects import PyAudioPlayer
+from effects.music_effects import PyAudioPlayer
 
 
 async def main():
@@ -31,6 +28,4 @@ async def main():
 
     await asyncio.create_task(cli.run())
 
-# dc.client.loop.create_task(main())
-# dc.start()
 asyncio.run(main())

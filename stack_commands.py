@@ -1,9 +1,10 @@
-from effects import *
-from physics_effects import ParticleEffect, ParticleEmitter, PhysicsBody
-from positional_effects import *
+from effects.effects import *
+from effects.physics_effects import ParticleEffect, ParticleEmitter, PhysicsBody
+from effects.positional_effects import *
+from effects.rand_effects import *
 from colors import *
 import asyncio
-from music_effects import *
+from effects.music_effects import *
 from neopixel_controller import *
 import board
 import neopixel
@@ -545,6 +546,103 @@ def emitter(state, nargs, args):
         raise Exception(f"Error {args[4]} is not a valid FUSE, must be a positive number")
 
     state.last_command_result = ParticleEmitter(particle, emission, density, fuse)
+    
+
+def randchoice(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} [EFFECTS]")
+    
+    effects = args[1]
+    if not isinstance(effects, list):
+        raise Exception(f"Error {args[1]} is not a list of effects")
+    for effect in effects:
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"Error {args[1]} is not a list of effects, {effect} is not a valid effect")
+    
+    state.last_command_result = RandChoice(effects)
+
+
+def randtime(state, nargs, args):
+    if nargs != 4:
+        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER")
+    
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+    
+    lower = parse_float(args[2])
+    if lower is None:
+        raise Exception(f"Error {args[2]} is not a valid number")
+    upper = parse_float(args[3])
+    if upper is None:
+        raise Exception(f"Error {args[3]} is not a valid number")
+
+    state.last_command_result = RandTime(effect, lower, upper)
+
+def randwarp(state, nargs, args):
+    if nargs != 4:
+        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER")
+    
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+    
+    lower = parse_float(args[2])
+    if lower is None:
+        raise Exception(f"Error {args[2]} is not a valid number")
+    upper = parse_float(args[3])
+    if upper is None:
+        raise Exception(f"Error {args[3]} is not a valid number")
+
+    state.last_command_result = RandWarp(effect, lower, upper)
+    
+
+def randselect(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} EFFECT")
+    
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+    
+    state.last_command_result = RandSelector(effect)
+
+
+def randpbody(state, nargs ,args):
+    if nargs not in [3, 4, 5, 6, 7]:
+        raise Exception(
+            f"Format: {args[0]} MIN_POS MAX_POS <MIN_VEL> <MAX_VEL> <MIN_ACC> <MAX_ACC>")
+
+    min_pos = parse_float(args[1])
+    if min_pos is None:
+        raise Exception(f"Error: {min_pos} is not a valid number")
+    max_pos = parse_float(args[2])
+    if max_pos is None:
+        raise Exception(f"Error: {max_pos} is not a valid number")
+
+    min_vel = 0
+    max_vel = 0
+    if nargs >= 4:
+        min_vel = parse_float(args[3])
+        if min_vel is None:
+            raise Exception(f"Error: {min_vel} is not a valid number")
+    if nargs >= 5:
+        max_vel = parse_float(args[4])
+        if max_vel is None:
+            raise Exception(f"Error: {max_vel} is not a valid number")
+        
+    min_acc = 0
+    max_acc = 0
+    if nargs >= 6:
+        min_acc = parse_float(args[5])
+        if min_acc is None:
+            raise Exception(f"Error: {min_acc} is not a valid number")
+    if nargs >= 7:
+        max_acc = parse_float(args[6])
+        if max_acc is None:
+            raise Exception(f"Error: {max_acc} is not a valid number")
+
+    state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc)
 
 
 def brightness(state, nargs, args):
@@ -655,31 +753,37 @@ def change_merge(state, nargs, args):
 
 
 commands = [
-    Command("gradient", gradient, "EFFECT", -1),
-    Command("split", split, "EFFECT", -1),
-    Command("rainbow", rainbow, "EFFECT", 0),
-    Command("rgb", rgb, "EFFECT", 3),
-    Command("hex", hex, "EFFECT", 1),
+    Command("gradient", gradient, "EFFECT"),
+    Command("split", split, "EFFECT"),
+    Command("rainbow", rainbow, "EFFECT"),
+    Command("rgb", rgb, "EFFECT"),
+    Command("hex", hex, "EFFECT"),
 
-    Command("size", size, "EFFECT", 4),
+    Command("size", size, "EFFECT"),
 
-    Command("blink", blink, "EFFECT", 2),
-    Command("colorwipe", color_wipe, "EFFECT", 2),
-    Command("fadein", fade_in, "EFFECT", 2),
-    Command("fadeout", fade_out, "EFFECT", 2),
-    Command("blinkfade", blink_fade, "EFFECT", 2),
-    Command("wave", wave, "EFFECT", 3),
-    Command("wheel", wheel, "EFFECT", 2),
-    Command("wipe", wipe, "EFFECT", 2),
-    Command("slide", slide, "EFFECT", 2),
+    Command("blink", blink, "EFFECT"),
+    Command("colorwipe", color_wipe, "EFFECT"),
+    Command("fadein", fade_in, "EFFECT"),
+    Command("fadeout", fade_out, "EFFECT"),
+    Command("blinkfade", blink_fade, "EFFECT"),
+    Command("wave", wave, "EFFECT"),
+    Command("wheel", wheel, "EFFECT"),
+    Command("wipe", wipe, "EFFECT"),
+    Command("slide", slide, "EFFECT"),
 
-    Command("playmusic", play_music, "EFFECT", 1),
-    Command("spectrum", spectrum, "EFFECT", 2),
-    Command("piano", piano, "EFFECT", 2),
+    Command("playmusic", play_music, "EFFECT"),
+    Command("spectrum", spectrum, "EFFECT"),
+    Command("piano", piano, "EFFECT"),
 
-    Command("pbody", pbody, "EFFECT", 4),
-    Command("particle", particle, "EFFECT", 3),
-    Command("emitter", emitter, "EFFECT", 10),
+    Command("pbody", pbody, "EFFECT"),
+    Command("particle", particle, "EFFECT"),
+    Command("emitter", emitter, "EFFECT"),
+    
+    Command("randchoice", randchoice, "EFFECT"),
+    Command("randtime", randtime, "EFFECT"),
+    Command("randwarp", randwarp, "EFFECT"),
+    Command("randpbody", randpbody, "EFFECT"),
+    Command("randselect", randselect, "EFFECT"),
 
     Command("brightness", brightness, n_args=1),
     Command("pause", pause),

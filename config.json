@@ -25,6 +25,8 @@
         "OVERWRITE": "\"OVERWRITE\"",
         "ADD": "\"ADD\"",
         "BLEND": "\"BLEND\"",
-        "MULTIPLY": "\"MULTIPLY\""
+        "MULTIPLY": "\"MULTIPLY\"",
+        
+        "retro": "wave (gradient (wipe (gradient RED GREEN BLUE RED) -450) (wipe (gradient BLUE RED GREEN BLUE) -450) [2 2]) 3 150"
     }
 }

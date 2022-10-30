@@ -1,7 +1,7 @@
 import asyncio
 from asyncio.tasks import wait
 from color_utils import multiply_colors
-from effects import STATIC, DYNAMIC, BaseEffect
+from effects.effects import STATIC, DYNAMIC, BaseEffect
 import datetime
 from color_utils import *
 

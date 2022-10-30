@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from pythonCLI import StackCLI
-from effects import *
+from effects.effects import *
 from neopixel_controller import *
 import asyncio
 import board
