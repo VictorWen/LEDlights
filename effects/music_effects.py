@@ -272,7 +272,7 @@ class SpectrumEffect(BaseEffect):
         self.max_freq = max_freq
         self.linear = linear
 
-        self.fade = None
+        self.fade = [0 for i in range(self.nbins)]
 
         self.closed = False
 

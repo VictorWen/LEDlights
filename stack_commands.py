@@ -679,7 +679,7 @@ def restart(state, nargs, args):
     if state.controller is not None:
         state.controller.stop()
     pixels = neopixel.NeoPixel(
-        board.D10, 300, brightness=0.35, auto_write=False)
+        board.D10, 150, brightness=0.35, auto_write=False)
     pixel_control = NeoPixelController(pixels, tps=60)
     state.controller = pixel_control
     state.pixels = pixels
