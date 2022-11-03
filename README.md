@@ -7,7 +7,7 @@ This repo (currently called LEDlights) contains a controller for Neopixel LED li
 * Custom scripting language to detail creative animations and light shows
 * Layers to compound multiple effects together
 * Musical effects that can take input from YouTube, Spotify, or local files
-* Decoupled commander and controller systems that provides for flexible interfacing
+* Decoupled commander and controller systems that provide for flexible interfacing
 
 ### Command Examples
 Sliding rainbow
