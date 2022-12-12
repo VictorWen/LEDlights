@@ -114,7 +114,7 @@ class PhysicsBody():
 
 
 class ParticleEffect(PhysicsEffect):
-    def __init__(self, effect, pbody, radius, behaviors=[], collidable=True):
+    def __init__(self, effect, pbody, radius, behaviors=[], collidable=False):
         super().__init__(pbody, collidable)
         self.effect = effect
         self.radius = radius

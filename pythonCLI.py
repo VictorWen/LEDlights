@@ -13,6 +13,7 @@ KEYWORD_NODE = "Keyword"
 COMMAND_NODE = "Command"
 NUMBER_NODE = "Number"
 STRING_NODE = "String"
+BOOLEAN_NODE = "Boolean"
 FUNVAR_NODE = "FunVar"
 
 # NON-TERMINALS
@@ -35,6 +36,7 @@ AWAITING_FUN_EQUALS = 2
 AWAITING_FUN_VALUE = 3
 
 SINGLE_TOKENS = ['(', ")", "[", "]", '=']
+BOOLEAN_TOKENS = ["true", "false"]
 
 
 async def ainput(string: str) -> str:
@@ -344,6 +346,8 @@ class CommandParser:
                 return ParseNode(type=NUMBER_NODE, value=value)
             except ValueError:
                 raise Exception(f"{token} is not a valid number")
+        elif token in BOOLEAN_TOKENS:
+            return ParseNode(type=BOOLEAN_NODE, value=(token==BOOLEAN_TOKENS[0]))
         elif token in self.fun_vars:
             return ParseNode(type=FUNVAR_NODE, value=token)
         elif token in self.keywords:
@@ -361,7 +365,7 @@ class CommandParser:
     def _check_is_valid_var_name(self, token):
         if not token.isalpha() or len(token) < 1:
             raise Exception(f"Invalid variable name: {token}")
-        if token in self.keywords or token in self.commands:
+        if token in self.keywords or token in self.commands or token in BOOLEAN_TOKENS:
             raise Exception(
                 f"Invalid variable name: {token} is already a reserved value")
 

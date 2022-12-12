@@ -496,8 +496,8 @@ def physics(state, nargs, args):
     
 
 def particle(state, nargs, args):
-    if nargs not in [4, 5]:
-        raise Exception(f"Format: {args[0]} EFFECT PBODY RADIUS <[BEHAVIORS]>")
+    if nargs not in [4, 5, 6]:
+        raise Exception(f"Format: {args[0]} EFFECT PBODY RADIUS <[BEHAVIORS]> <IS-COLLIDABLE>")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
@@ -519,8 +519,12 @@ def particle(state, nargs, args):
         for behavior in behaviors:
             if not isinstance(behavior, ParticleBehavior):
                 raise Exception(f"Error {args[4]} is not a list of behaviors, {behavior} is not a valid particle behavior")
+    
+    collidable = False
+    if nargs > 5:
+        collidable = True if args[5] else False
 
-    state.last_command_result = ParticleEffect(effect, pbody, radius, behaviors)
+    state.last_command_result = ParticleEffect(effect, pbody, radius, behaviors, collidable)
 
 
 def emitter(state, nargs, args):
@@ -558,8 +562,8 @@ def explosion(state, nargs, args):
     
 
 def collision(state, nargs, args):
-    if nargs != 2:
-        raise Exception(f"Format: {args[0]} [BEHAVIORS]")
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} [BEHAVIORS] <IS-ONCE>")
 
     behaviors = args[1]
     if not isinstance(behaviors, list):
@@ -567,8 +571,12 @@ def collision(state, nargs, args):
     for behavior in behaviors:
         if not isinstance(behavior, ParticleBehavior):
             raise Exception(f"Error {args[41]} is not a list of behaviors, {behavior} is not a valid particle behavior")
+        
+    once = True
+    if nargs > 2:
+        once = True if args[2] else False
     
-    state.last_command_result = CollisionBehavior(behaviors)
+    state.last_command_result = CollisionBehavior(behaviors, once)
 
 
 def decay(state, nargs, args):
