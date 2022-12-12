@@ -1,3 +1,6 @@
+import time
+import numpy as np
+
 def clone_pixels(pixels):
     return list(tuple(pixels[i]) for i in range(len(pixels)))
 

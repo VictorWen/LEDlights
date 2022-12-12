@@ -1,0 +1,9 @@
+let ParticleMagenta = (particle (rgb 224 0 32) (randpbody 0 5 45 85) 0.2 [(decay 0.625 5)])
+let ParticleIndigo = (particle (rgb 42 0 224) (randpbody 0 -5 -45 -85) 0.2 [(decay 0.625 5)])
+let ParticleRed = (particle RED (randpbody -1 -1 -30 -50) 0.5 [(collision [(explosion ParticleMagenta 15 0) (decay 1 0)])])
+let ParticleBlue = (particle BLUE (randpbody 1 1 30 50) 0.5 [(collision [(explosion ParticleIndigo 15 0) (decay 1 0)])])
+
+let RedEmitter = (particle CLEAR (pbody 149) 1 [(emitter ParticleRed 0.1)])
+let BlueEmitter = (particle CLEAR (pbody 0) 1 [(emitter ParticleBlue 0.1)])
+
+physics [RedEmitter BlueEmitter]

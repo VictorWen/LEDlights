@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import os
+import traceback
 from config import config
 
 
@@ -50,9 +51,10 @@ def _create_command_dict(commands):
 
 
 class StackCLI:
-    def __init__(self, commands: list, state, end_queue="\n"):
+    def __init__(self, commands: list, state, end_queue="\n", debug=False):
         self.commands = _create_command_dict(commands)
         self.state = state
+        self.debug = debug
 
         self.state.vars.update(VARS)
 
@@ -97,8 +99,10 @@ class StackCLI:
         try:
             await self.parse_queue()
         except Exception as e:
-            # self.state.send(traceback.format_exc())
-            self.state.send(e)
+            if self.debug:
+                self.state.send(traceback.format_exc())
+            else:
+                self.state.send(e)
 
     async def parse_queue(self):
         while not self.queueing and len(self.queue) > 0:

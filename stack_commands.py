@@ -1,5 +1,5 @@
 from effects.effects import *
-from effects.physics_effects import ParticleEffect, ParticleEmitter, PhysicsBody
+from effects.physics_effects import *
 from effects.positional_effects import *
 from effects.rand_effects import *
 from colors import *
@@ -477,75 +477,113 @@ def pbody(state, nargs, args):
     state.last_command_result = PhysicsBody(pos, vel, acc)
 
 
+def physics(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} [PARTICLES]")
+
+    particles = args[1]
+    if not isinstance(particles, list):
+        raise Exception(f"Error {args[1]} is not a list of particles")
+    for particle in particles:
+        if not isinstance(particle, PhysicsEffect):
+            raise Exception(f"Error {args[1]} is not a list of particles, {particle} is not a valid effect")
+        
+    # gravity = parse_float(args[2])
+    # if gravity is None:
+    #     raise Exception(f"Error: {gravity} is an invalid GRAVITY")
+    
+    state.last_command_result = PhysicsEngine(particles)
+    
+
 def particle(state, nargs, args):
-    if nargs < 3 or nargs > 8:
-        raise Exception(f"Format: {args[0]} [EFFECT] PBODY <RADIUS> <DECAY> <PBODY_MAX> <RADIUS_MAX> <DECAY_MAX>")
+    if nargs not in [4, 5]:
+        raise Exception(f"Format: {args[0]} EFFECT PBODY RADIUS <[BEHAVIORS]>")
 
-    effects = args[1]
-    if not isinstance(effects, list):
-        raise Exception(f"Error {args[1]} is not a list of effects")
-    for effect in effects:
-        if not isinstance(effect, BaseEffect):
-            raise Exception(f"Error {args[1]} is not a list of effects, {effect} is not a valid effect")
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f"Error {args[1]} is not a valid effect")
 
-    pbodyA = args[2]
-    if not isinstance(pbodyA, PhysicsBody):
-        raise Exception(f'Error {pbodyA} is not a valid PBODY')
+    pbody = args[2]
+    if not isinstance(pbody, PhysicsBody):
+        raise Exception(f'Error {pbody} is not a valid PBODY')
 
-    radiusA = 0
-    if nargs >= 4:
-        radiusA = parse_float(args[3])
-        if radiusA is None:
-            raise Exception(f"Error {args[3]} is not a valid RADIUS")
+    radius = parse_float(args[3])
+    if radius is None:
+        raise Exception(f"Error {args[3]} is not a valid RADIUS")
+    
+    behaviors = []
+    if nargs > 4:
+        behaviors = args[4]
+        if not isinstance(behaviors, list):
+            raise Exception(f"Error {args[4]} is not a list of behaviors")
+        for behavior in behaviors:
+            if not isinstance(behavior, ParticleBehavior):
+                raise Exception(f"Error {args[4]} is not a list of behaviors, {behavior} is not a valid particle behavior")
 
-    decayA = 0
-    if nargs >= 5:
-        decayA = parse_float(args[4])
-        if decayA is None:
-            raise Exception(f"Error {args[4]} is not a valid DECAY")
-
-    pbodyB = None
-    if nargs >= 6:
-        pbodyB = args[5]
-        if not isinstance(pbodyB, PhysicsBody):
-            raise Exception(f'Error {pbodyB} is not a valid PBODY_MAX')
-
-    radiusB = None
-    if nargs >= 7:
-        radiusB = parse_float(args[6])
-        if radiusB is None:
-            raise Exception(f"Error {args[6]} is not a valid RADIUS_MAX")
-
-    decayB = None
-    if nargs >= 8:
-        decayB = parse_float(args[7])
-        if decayB is None:
-            raise Exception(f"Error {args[7]} is not a valid DECAY_MAX")
-
-    state.last_command_result = ParticleEffect(effects, pbodyA, radiusA, decayA, pbodyB, radiusB, decayB)
+    state.last_command_result = ParticleEffect(effect, pbody, radius, behaviors)
 
 
 def emitter(state, nargs, args):
-    if nargs != 5:
-        raise Exception(f"Format: {args[0]} PARTICLE EMISSION DENSITY FUSE")
-
-    particle = args[1]
-    if not isinstance(particle, ParticleEffect):
-        raise Exception(f"Error {particle} is not a valid PARTICLE")
+    if nargs != 3:
+        raise Exception(f"Format: {args[0]} EMISSION DENSITY")
     
-    emission = args[2]
+    emission = args[1]
     if not isinstance(emission, ParticleEffect):
         raise Exception(f"Error {emission} is not a valid EMISSION, must be a particle")
     
-    density = parse_nonzero_int(args[3])
+    density = parse_nonzero_float(args[2])
     if density is None or density <= 0:
-        raise Exception(f"Error {args[3]} is not a valid DENSITY, must be a positive number")
-    
-    fuse = parse_float(args[4])
-    if fuse is None or fuse <= 0:
-        raise Exception(f"Error {args[4]} is not a valid FUSE, must be a positive number")
+        raise Exception(f"Error {args[2]} is not a valid DENSITY, must be a positive number")
 
-    state.last_command_result = ParticleEmitter(particle, emission, density, fuse)
+    state.last_command_result = EmitterBehavior(emission, density)
+
+    
+def explosion(state, nargs, args):
+    if nargs != 4:
+        raise Exception(f"Format: {args[0]} EMISSION DENSITY FUSE")
+    
+    emission = args[1]
+    if not isinstance(emission, ParticleEffect):
+        raise Exception(f"Error {emission} is not a valid EMISSION, must be a particle")
+    
+    density = parse_nonzero_int(args[2])
+    if density is None or density <= 0:
+        raise Exception(f"Error {args[2]} is not a valid DENSITY, must be a positive number")
+    
+    fuse = parse_float(args[3])
+    if fuse is None or fuse < 0:
+        raise Exception(f"Error {args[3]} is not a valid FUSE, must be a non-negative number")
+
+    state.last_command_result = ExplosionBehavior(emission, density, fuse)
+    
+
+def collision(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} [BEHAVIORS]")
+
+    behaviors = args[1]
+    if not isinstance(behaviors, list):
+        raise Exception(f"Error {args[1]} is not a list of behaviors")
+    for behavior in behaviors:
+        if not isinstance(behavior, ParticleBehavior):
+            raise Exception(f"Error {args[41]} is not a list of behaviors, {behavior} is not a valid particle behavior")
+    
+    state.last_command_result = CollisionBehavior(behaviors)
+
+
+def decay(state, nargs, args):
+    if nargs != 3:
+        raise Exception(f"Format: {args[0]} HALF-LIFE MAX-TIME")
+    
+    half_life = parse_nonzero_float(args[1])
+    if half_life is None or half_life <= 0:
+        raise Exception(f"Format: {args[1]} is not a valid HALF-LIFE")
+    
+    max_time = parse_float(args[2])
+    if max_time is None or max_time < 0:
+        raise Exception(f"Format: {args[2]} is not a valid max_time")
+    
+    state.last_command_result = DecayBehavior(half_life, max_time)
     
 
 def randchoice(state, nargs, args):
@@ -775,9 +813,14 @@ commands = [
     Command("spectrum", spectrum, "EFFECT"),
     Command("piano", piano, "EFFECT"),
 
+    Command("physics", physics, "EFFECT"),
     Command("pbody", pbody, "EFFECT"),
     Command("particle", particle, "EFFECT"),
+    
     Command("emitter", emitter, "EFFECT"),
+    Command("explosion", explosion, "EFFECT"),
+    Command("collision", collision, "EFFECT"),
+    Command("decay", decay, "EFFECT"),
     
     Command("randchoice", randchoice, "EFFECT"),
     Command("randtime", randtime, "EFFECT"),

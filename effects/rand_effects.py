@@ -77,10 +77,20 @@ class RandPBody(PhysicsBody):
             random.random() * (max_vel - min_vel) + min_vel,
             random.random() * (max_acc - min_acc) + min_acc
         )
-        # self.min_pos = min_pos
-        # self.max_pos = max_pos
-        # self.min_vel = min_vel
-        # self.max_vel = max_vel
-        # self.min_acc = min_acc
-        # self.max_acc = max_acc
+        self.min_pos = min_pos
+        self.max_pos = max_pos
+        self.min_vel = min_vel
+        self.max_vel = max_vel
+        self.min_acc = min_acc
+        self.max_acc = max_acc
+    
+    def clone(self):
+        return RandPBody(
+            self.min_pos,
+            self.max_pos,
+            self.min_vel,
+            self.max_vel,
+            self.min_acc,
+            self.max_acc
+        )
         

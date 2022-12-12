@@ -60,7 +60,7 @@ class ColorAdapter(BaseEffect):
             pixels[i] = self.color.get_color(i/n)
 
     def clone(self):
-        return ColorAdapter(self.color_selector)
+        return ColorAdapter(self.color)
 
 
 class DynamicSplit(BaseEffect):
@@ -86,7 +86,10 @@ class DynamicSplit(BaseEffect):
             left = int(right)
 
     def clone(self):
-        return DynamicSplit(self.effects)
+        effects = []
+        for effect in self.effects:
+            effects.append(effect.clone())
+        return DynamicSplit(effects)
 
 
 class DynamicGradient(BaseEffect):
@@ -123,7 +126,7 @@ class DynamicGradient(BaseEffect):
         n = len(colors)
 
         for i in range(N):
-            value = i / N
+            value = i / (N-1)
             if n == 1:
                 pixels[i] = colors[0]
             elif value == 0:
@@ -137,7 +140,10 @@ class DynamicGradient(BaseEffect):
                     int(colors[j][k] + (value - j) * differences[j][k]) for k in range(3))
 
     def clone(self):
-        return DynamicGradient(self.effects, self.weights)
+        effects = []
+        for effect in self.effects:
+            effects.append(effect.clone())
+        return DynamicGradient(effects, self.weights)
 
 
 class BlinkEffect(BaseEffect):
@@ -164,7 +170,7 @@ class BlinkEffect(BaseEffect):
         set_pixels(pixels, colors)
 
     def clone(self):
-        return BlinkEffect(self.color, self.time_length)
+        return BlinkEffect(self.color.clone(), self.time_length)
 
 
 class ColorWipe(BaseEffect):
@@ -198,7 +204,7 @@ class ColorWipe(BaseEffect):
                     pixels[i] = self.original[i]
 
     def clone(self):
-        return ColorWipe(self.color, self.time_length)
+        return ColorWipe(self.color.clone(), self.time_length)
 
 
 class FadeIn(BaseEffect):
@@ -217,7 +223,7 @@ class FadeIn(BaseEffect):
         set_pixels(pixels, colors)
 
     def clone(self):
-        return FadeIn(self.color, self.time_length)
+        return FadeIn(self.color.clone(), self.time_length)
 
 
 class FadeOut(BaseEffect):
@@ -236,7 +242,7 @@ class FadeOut(BaseEffect):
         set_pixels(pixels, colors)
 
     def clone(self):
-        return FadeOut(self.color, self.time_length)
+        return FadeOut(self.color.clone(), self.time_length)
 
 
 class BlinkFade(BaseEffect):
@@ -256,7 +262,7 @@ class BlinkFade(BaseEffect):
         set_pixels(pixels, colors)
 
     def clone(self):
-        return BlinkFade(self.color, self.time_length)
+        return BlinkFade(self.color.clone(), self.time_length)
 
 
 class WaveEffect(BaseEffect):
@@ -281,7 +287,7 @@ class WaveEffect(BaseEffect):
             pixels[i] = colors[int(value * (n - 1))]
 
     def clone(self):
-        return WaveEffect(self.color, self.period, self.wavelength)
+        return WaveEffect(self.color.clone(), self.period, self.wavelength)
 
 
 class WheelEffect(BaseEffect):
@@ -305,7 +311,7 @@ class WheelEffect(BaseEffect):
             pixels[i] = colors[int(value * (n - 1))]
 
     def clone(self):
-        return WheelEffect(self.color, self.period)
+        return WheelEffect(self.color.clone(), self.period)
 
 
 class WipeEffect(BaseEffect):
@@ -327,7 +333,7 @@ class WipeEffect(BaseEffect):
             pixels[i] = colors[offset % n]
 
     def clone(self):
-        return WipeEffect(self.color, self.period)
+        return WipeEffect(self.color.clone(), self.period)
 
 
 class SlidingEffect(BaseEffect):
@@ -351,4 +357,4 @@ class SlidingEffect(BaseEffect):
             pixels[i] = colors[(i - offset) % n]
 
     def clone(self):
-        return SlidingEffect(self.color, self.period)
+        return SlidingEffect(self.color.clone(), self.period)
