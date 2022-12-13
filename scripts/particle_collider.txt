@@ -5,14 +5,14 @@ let RedGradient = (gradient RED BLACK)
 let BlueGradient = (gradient BLUE BLACK)
 
 # Define particles
-let ParticleMagenta = (particle MagentaGradient (randpbody 0 5 40 85) 1 [(decay 0.625 5)])
-let ParticleIndigo = (particle IndigoGradient (randpbody 0 -5 -40 -85) 1 [(decay 0.625 5)])
-let ParticleRed = (particle RedGradient (randpbody -1 -1 -30 -50) 0.5 [(collision [(explosion ParticleMagenta 10 0) (decay 1 0)])] true)
-let ParticleBlue = (particle BlueGradient (randpbody 1 1 30 50) 0.5 [(collision [(explosion ParticleIndigo 10 0) (decay 1 0)])] true)
+let ParticleMagenta = (particle MagentaGradient (randpbody 0 1 40 85) 1 [(decay 0.625) (life 5)])
+let ParticleIndigo = (particle IndigoGradient (randpbody 0 -1 -40 -85) 1 [(decay 0.625) (life 5)])
+let ParticleRed = (particle RedGradient (randpbody -1 -1 -30 -50) 0.5 [(collision [(explosion ParticleMagenta 10 0) (life 0)])] true)
+let ParticleBlue = (particle BlueGradient (randpbody 1 1 30 50) 0.5 [(collision [(explosion ParticleIndigo 10 0) (life 0)])] true)
 
 # Define particle emitters
-let RedEmitter = (particle RedGradient (pbody 149) 0.1 [(emitter ParticleRed 0.2)])
-let BlueEmitter = (particle BlueGradient (pbody 1) 0.1 [(emitter ParticleBlue 0.2)])
+let RedEmitter = (particle RedGradient (pbody 149) 0.1 [(emitter ParticleRed 0.75)])
+let BlueEmitter = (particle BlueGradient (pbody 1) 0.1 [(emitter ParticleBlue 0.75)])
 
 # Run engine
 physics [RedEmitter BlueEmitter]

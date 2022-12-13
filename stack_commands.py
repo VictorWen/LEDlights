@@ -579,24 +579,31 @@ def collision(state, nargs, args):
     state.last_command_result = CollisionBehavior(behaviors, once)
 
 
+def life(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} LIFETIME")
+    
+    lifetime = parse_float(args[1])
+    if lifetime is None or lifetime < 0:
+        raise Exception(f"Format: {args[1]} is not a valid HALF-LIFE")
+    
+    state.last_command_result = LifetimeBehavior(lifetime)
+
+
 def decay(state, nargs, args):
-    if nargs != 3:
-        raise Exception(f"Format: {args[0]} HALF-LIFE MAX-TIME")
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} HALF-LIFE")
     
     half_life = parse_nonzero_float(args[1])
     if half_life is None or half_life <= 0:
         raise Exception(f"Format: {args[1]} is not a valid HALF-LIFE")
     
-    max_time = parse_float(args[2])
-    if max_time is None or max_time < 0:
-        raise Exception(f"Format: {args[2]} is not a valid max_time")
-    
-    state.last_command_result = DecayBehavior(half_life, max_time)
+    state.last_command_result = DecayBehavior(half_life)
     
 
 def randchoice(state, nargs, args):
-    if nargs != 2:
-        raise Exception(f"Format: {args[0]} [EFFECTS]")
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} [EFFECTS] <REROLLS>")
     
     effects = args[1]
     if not isinstance(effects, list):
@@ -604,13 +611,19 @@ def randchoice(state, nargs, args):
     for effect in effects:
         if not isinstance(effect, BaseEffect):
             raise Exception(f"Error {args[1]} is not a list of effects, {effect} is not a valid effect")
+        
+    reroll = -1
+    if nargs > 2:
+        reroll = parse_nonzero_int(args[2])
+        if reroll is None:
+            raise Exception(f"Error {args[2]} is not a valid non-zero integer")
     
-    state.last_command_result = RandChoice(effects)
+    state.last_command_result = RandChoice(effects, reroll)
 
 
 def randtime(state, nargs, args):
-    if nargs != 4:
-        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER")
+    if nargs not in [4, 5]:
+        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER <REROLLS>")
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
@@ -622,12 +635,18 @@ def randtime(state, nargs, args):
     upper = parse_float(args[3])
     if upper is None:
         raise Exception(f"Error {args[3]} is not a valid number")
+    
+    reroll = -1
+    if nargs > 4:
+        reroll = parse_nonzero_int(args[4])
+        if reroll is None:
+            raise Exception(f"Error {args[4]} is not a valid non-zero integer")
 
-    state.last_command_result = RandTime(effect, lower, upper)
+    state.last_command_result = RandTime(effect, lower, upper, reroll)
 
 def randwarp(state, nargs, args):
-    if nargs != 4:
-        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER")
+    if nargs not in [4, 5]:
+        raise Exception(f"Format: {args[0]} EFFECT LOWER UPPER <REROLLS>")
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
@@ -639,25 +658,37 @@ def randwarp(state, nargs, args):
     upper = parse_float(args[3])
     if upper is None:
         raise Exception(f"Error {args[3]} is not a valid number")
+    
+    reroll = -1
+    if nargs > 4:
+        reroll = parse_nonzero_int(args[4])
+        if reroll is None:
+            raise Exception(f"Error {args[4]} is not a valid non-zero integer")
 
-    state.last_command_result = RandWarp(effect, lower, upper)
+    state.last_command_result = RandWarp(effect, lower, upper, reroll)
     
 
 def randselect(state, nargs, args):
-    if nargs != 2:
-        raise Exception(f"Format: {args[0]} EFFECT")
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} EFFECT <REROLLS>")
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
         raise Exception(f'Error {args[1]} is not a valid EFFECT')
     
-    state.last_command_result = RandSelector(effect)
+    reroll = -1
+    if nargs > 2:
+        reroll = parse_nonzero_int(args[2])
+        if reroll is None:
+            raise Exception(f"Error {args[2]} is not a valid non-zero integer")
+    
+    state.last_command_result = RandSelector(effect, reroll)
 
 
 def randpbody(state, nargs ,args):
-    if nargs not in [3, 4, 5, 6, 7]:
+    if nargs not in [3, 5, 7, 8]:
         raise Exception(
-            f"Format: {args[0]} MIN_POS MAX_POS <MIN_VEL> <MAX_VEL> <MIN_ACC> <MAX_ACC>")
+            f"Format: {args[0]} MIN_POS MAX_POS <MIN_VEL> <MAX_VEL> <MIN_ACC> <MAX_ACC> <REROLL>")
 
     min_pos = parse_float(args[1])
     if min_pos is None:
@@ -687,8 +718,12 @@ def randpbody(state, nargs ,args):
         max_acc = parse_float(args[6])
         if max_acc is None:
             raise Exception(f"Error: {max_acc} is not a valid number")
+        
+    reroll = True
+    if nargs > 7:
+        reroll = True if args[7] else False
 
-    state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc)
+    state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, reroll)
 
 
 def brightness(state, nargs, args):
@@ -828,6 +863,7 @@ commands = [
     Command("emitter", emitter, "EFFECT"),
     Command("explosion", explosion, "EFFECT"),
     Command("collision", collision, "EFFECT"),
+    Command("life", life, "EFFECT"),
     Command("decay", decay, "EFFECT"),
     
     Command("randchoice", randchoice, "EFFECT"),

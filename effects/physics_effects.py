@@ -12,9 +12,7 @@ class PhysicsEngine(BaseEffect):
         self.effects = set(physics_effects)
         self.new_effects = []
     
-    def tick(self, pixels, time_delta):
-        print(time_delta, len(self.effects))
-        
+    def tick(self, pixels, time_delta):      
         N = len(pixels)
         colors = clone_pixels(pixels)
         self.tick_effects(colors, time_delta)
@@ -22,9 +20,9 @@ class PhysicsEngine(BaseEffect):
         for i in range(N):
             pixels[i] = (0, 0, 0)
         for effect in self.effects:
-            a = math.floor(effect.body.position - effect.bounds)
-            b = math.ceil(effect.body.position + effect.bounds)
-            for x in range(a, b + 1):
+            left = math.floor(effect.body.position - effect.bounds)
+            right = math.ceil(effect.body.position + effect.bounds)
+            for x in range(left, right + 1):
                 if 0 <= x < N:
                     pixels[x] = add_colors(effect.get_pixel(x), pixels[x])
           
@@ -165,7 +163,10 @@ class ParticleEffect(PhysicsEffect):
         self.new_behaviors.append(behavior)
 
     def clone(self):
-        return ParticleEffect(self.effect.clone(), self.body.clone(), self.radius, self.init_behaviors, self.collidable)
+        behaviors = []
+        for behavior in self.init_behaviors:
+            behaviors.append(behavior.clone())
+        return ParticleEffect(self.effect.clone(), self.body.clone(), self.radius, behaviors, self.collidable)
     
 
 class EmitterBehavior(ParticleBehavior):
@@ -189,7 +190,7 @@ class EmitterBehavior(ParticleBehavior):
         engine.add_effect(emission)
         
     def clone(self):
-        return EmitterBehavior(self.emission, self.density)
+        return EmitterBehavior(self.emission.clone(), self.density)
         
 
 class ExplosionBehavior(ParticleBehavior):
@@ -215,7 +216,7 @@ class ExplosionBehavior(ParticleBehavior):
             engine.add_effect(emission)
             
     def clone(self):
-        return ExplosionBehavior(self.emission, self.density, self.fuse)
+        return ExplosionBehavior(self.emission.clone(), self.density, self.fuse)
 
 
 class CollisionBehavior(ParticleBehavior):
@@ -230,8 +231,9 @@ class CollisionBehavior(ParticleBehavior):
             return
         if not self.once or not self.fired:
             for behavior in self.behaviors:
-                behavior.tick(engine, particle, 0)
-                particle.add_behavior(behavior)
+                b = behavior.clone()
+                b.tick(engine, particle, 0)
+                particle.add_behavior(b)
             self.fired = True
     
     def clone(self):
@@ -241,20 +243,30 @@ class CollisionBehavior(ParticleBehavior):
         return CollisionBehavior(behaviors, self.once)
 
 
-class DecayBehavior(ParticleBehavior):
-    def __init__(self, half_life, max_time):
-        super().__init__()
-        self.half_life = half_life
-        self.max_time = max_time
+class LifetimeBehavior(ParticleBehavior):
+    def __init__(self, lifetime):
+        self.lifetime = lifetime
         self.time_sum = 0
     
     def tick(self, engine, particle, time_delta):
         self.time_sum += time_delta
-        if self.time_sum >= self.max_time:
+        if self.time_sum >= self.lifetime:
             particle.is_alive = False
-        else:
-            decay = math.pow(0.5, self.time_sum / self.half_life)
-            particle.brightness = decay
+            
+    def clone(self):
+        return LifetimeBehavior(self.lifetime)
+
+
+class DecayBehavior(ParticleBehavior):
+    def __init__(self, half_life):
+        super().__init__()
+        self.half_life = half_life
+        self.time_sum = 0
+    
+    def tick(self, engine, particle, time_delta):
+        self.time_sum += time_delta
+        decay = math.pow(0.5, self.time_sum / self.half_life)
+        particle.brightness = decay
     
     def clone(self):
-        return DecayBehavior(self.half_life, self.max_time)
+        return DecayBehavior(self.half_life)

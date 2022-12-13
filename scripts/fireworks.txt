@@ -1,15 +1,17 @@
-let FireworkParticle = particle [(gradient RED (rgb 128 32 0) CLEAR)] (pbody 0 75 -28) 0.25 3.5 (pbody 0 83 -28) 0.35
+let SparkColor = (gradient (randselect rainbow 2) BLACK)
+let SparkPBody = (randpbody -1 1 -20 30 -10 -10)
+let SparkBehaviors = [(decay 0.625) (life 5)]
+let Spark = (particle SparkColor SparkPBody 1 SparkBehaviors)
 
-let FadeRed = (fadeout (gradient RED CLEAR) 3)
-let FadeOrange = (fadeout (gradient ORANGE CLEAR) 3)
-let FadeYellow = (fadeout (gradient YELLOW CLEAR) 3)
-let FadeGreen = (fadeout (gradient GREEN CLEAR) 3)
-let FadeBlue = (fadeout (gradient BLUE CLEAR) 3)
-let FadePurple = (fadeout (gradient PURPLE CLEAR) 3)
+let FireworkColor = (gradient (randselect rainbow) BLACK)
+let FireworkPBody = (randpbody 0 0 35 45 -10 -10)
+let FireworkBehaviors = [(collision [(life 0) (explosion Spark 25 0)])]
+let Firework = (particle FireworkColor FireworkPBody 2 FireworkBehaviors true)
 
-let SparkParticle = particle [FadeRed] (pbody -20 25 -10) 0.5 3.5 (pbody 20 15 -10) 1
+let FusePBody = (randpbody 0 0 20 30)
+let Fuse = (particle BLACK FusePBody 0 [(collision [(life 0)])] true)
 
-let Firework = emitter FireworkParticle SparkParticle 25 3.5
-let ShooterParticle = particle [PURPLE] (pbody 3)
-let Shooter = emitter ShooterParticle Firework 1 7
-Shooter
+let FireworkEmitter = (particle BLACK (pbody 0) 0 [(emitter Firework 0.2)])
+let FuseEmitter = (particle BLACK (pbody -40) 0 [(emitter Fuse 0.2)])
+
+physics [FireworkEmitter FuseEmitter]

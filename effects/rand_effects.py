@@ -5,26 +5,31 @@ import random
 from effects.physics_effects import PhysicsBody
 
 class RandChoice(BaseEffect):
-    def __init__(self, effects) -> None:
+    def __init__(self, effects, rerolls=-1) -> None:
         super().__init__()
         self.effects = effects
+        self.rerolls = rerolls
         self.effect = random.choice(self.effects)
         
     def tick(self, pixels, time_delta):
         self.effect.tick(pixels, time_delta)
         
     def clone(self):
-        return RandChoice(self.effect)
+        if self.rerolls != 0:
+            return RandChoice(self.effects.copy(), self.rerolls - 1)
+        else:
+            return self.effect.copy()
 
 
 class RandTime(BaseEffect):
-    def __init__(self, effect, lower, upper) -> None:
+    def __init__(self, effect, lower, upper, rerolls=-1) -> None:
         super().__init__()
         self.effect = effect
         self.lower = lower
         self.upper = upper
         self.time = random.random() * (upper - lower) + lower
         self.first_tick = True
+        self.rerolls = rerolls
     
     def tick(self, pixels, time_delta):
         if self.first_tick:
@@ -34,30 +39,41 @@ class RandTime(BaseEffect):
             self.effect.tick(pixels, time_delta)
         
     def clone(self):
-        return RandTime(self.effect, self.lower, self.upper)
+        if self.rerolls != 0:
+            return RandTime(self.effect.clone(), self.lower, self.upper, self.rerolls - 1)
+        else:
+            copy = RandTime(self.effect.clone(), self.lower, self.upper)
+            copy.time = self.time
+            return copy
         
 
 class RandWarp(BaseEffect):
-    def __init__(self, effect, lower, upper) -> None:
+    def __init__(self, effect, lower, upper, rerolls=-1) -> None:
         super().__init__()
         self.effect = effect
         self.lower = lower
         self.upper = upper
         self.warp = random.random() * (upper - lower) + lower
-        self.first_tick = True
+        self.rerolls = rerolls
     
     def tick(self, pixels, time_delta):
         self.effect.tick(pixels, time_delta * self.warp)
         
     def clone(self):
-        return RandTime(self.effect, self.lower, self.upper)
+        if self.rerolls != 0:
+            return RandWarp(self.effect.clone(), self.lower, self.upper, self.rerolls - 1)
+        else:
+            copy = RandWarp(self.effect.clone(), self.lower, self.upper)
+            copy.warp = self.warp
+            return copy
     
 
 class RandSelector(BaseEffect):
-    def __init__(self, effect):
+    def __init__(self, effect, rerolls=-1):
         super().__init__()
         self.effect = effect
         self.index = random.random()
+        self.rerolls = rerolls
         
     def tick(self, pixels, time_delta):
         colors = clone_pixels(pixels)
@@ -67,11 +83,16 @@ class RandSelector(BaseEffect):
         fill_pixels(pixels, colors[int(N * self.index)])
     
     def clone(self):
-        return RandSelector(self.effect)
+        if self.rerolls != 0:
+            return RandSelector(self.effect.clone(), self.rerolls - 1)
+        else:
+            copy = RandSelector(self.effect.clone(), 0)
+            copy.index = self.index
+            return copy
 
 
 class RandPBody(PhysicsBody):
-    def __init__(self, min_pos, max_pos, min_vel=0, max_vel=0, min_acc=0, max_acc=0):
+    def __init__(self, min_pos, max_pos, min_vel=0, max_vel=0, min_acc=0, max_acc=0, rerolls=-1):
         super().__init__(
             random.random() * (max_pos - min_pos) + min_pos,
             random.random() * (max_vel - min_vel) + min_vel,
@@ -83,14 +104,19 @@ class RandPBody(PhysicsBody):
         self.max_vel = max_vel
         self.min_acc = min_acc
         self.max_acc = max_acc
+        self.rerolls = rerolls
     
     def clone(self):
-        return RandPBody(
-            self.min_pos,
-            self.max_pos,
-            self.min_vel,
-            self.max_vel,
-            self.min_acc,
-            self.max_acc
-        )
+        if self.rerolls != 0:
+            return RandPBody(
+                self.min_pos,
+                self.max_pos,
+                self.min_vel,
+                self.max_vel,
+                self.min_acc,
+                self.max_acc,
+                self.rerolls - 1
+            )
+        else:
+            return PhysicsBody(self.position, self.velocity, self.acceleration)
         
