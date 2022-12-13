@@ -2,11 +2,18 @@ import time
 import numpy as np
 
 def clone_pixels(pixels):
+    # if isinstance(pixels, list):
+    #     return pixels.copy()
     return list(tuple(pixels[i]) for i in range(len(pixels)))
 
 
 def clone_spliced_pixels(pixels, size, offset):
     return list(tuple(pixels[i % len(pixels)]) for i in range(offset, offset+size))
+
+
+def resize_clone(pixels, size):
+    N = len(pixels)
+    return list(tuple(pixels[int(i/(size-1)*(N-1))]) for i in range(size))
 
 
 def set_pixels(pixels, colors):

@@ -13,18 +13,21 @@ class PhysicsEngine(BaseEffect):
         self.new_effects = []
     
     def tick(self, pixels, time_delta):
-        # print(time_delta, len(self.effects))
+        print(time_delta, len(self.effects))
+        
         N = len(pixels)
         colors = clone_pixels(pixels)
-        
         self.tick_effects(colors, time_delta)
-        
+
         for i in range(N):
-            sum = (0, 0, 0)
-            for effect in self.effects:
-                sum = add_colors(effect.get_pixel(i), sum)
-            pixels[i] = sum
-        
+            pixels[i] = (0, 0, 0)
+        for effect in self.effects:
+            a = math.floor(effect.body.position - effect.bounds)
+            b = math.ceil(effect.body.position + effect.bounds)
+            for x in range(a, b + 1):
+                if 0 <= x < N:
+                    pixels[x] = add_colors(effect.get_pixel(x), pixels[x])
+          
     
     def tick_effects(self, colors, time_delta):
         dead_effects = []
@@ -51,13 +54,14 @@ class PhysicsEngine(BaseEffect):
 
 
 class PhysicsEffect(BaseEffect):
-    def __init__(self, body, collidable=False):
+    def __init__(self, body, collidable=False, bounds=3):
         super().__init__()
         self.body = body
         self.is_alive = True
         self.collidable = collidable
         self.has_collision = False
         self.notify_collision = False
+        self.bounds = bounds
 
     def tick(self, engine, _, time_delta):
         if not self.is_alive:
@@ -115,7 +119,7 @@ class PhysicsBody():
 
 class ParticleEffect(PhysicsEffect):
     def __init__(self, effect, pbody, radius, behaviors=[], collidable=False):
-        super().__init__(pbody, collidable)
+        super().__init__(pbody, collidable, int(3 * radius + 1))
         self.effect = effect
         self.radius = radius
         
@@ -132,7 +136,7 @@ class ParticleEffect(PhysicsEffect):
         
     def tick(self, engine, colors, time_delta):
         super().tick(engine, colors, time_delta)
-        self.colors = clone_pixels(colors)
+        self.colors = resize_clone(colors, min(len(colors), math.ceil(10 * self.radius + 5)))
         self.N = len(self.colors) - 1
         self.effect.tick(self.colors, time_delta)
         
@@ -146,7 +150,7 @@ class ParticleEffect(PhysicsEffect):
         return self.gaussian_blur((self.body.position - index))
     
     def gaussian_blur(self, dx):
-        if self.radius <= 0:
+        if self.radius <= 0 or abs(dx) >= 3 * self.radius:
             return (0, 0, 0)
         x2 = dx * dx
         s2 = self.radius * self.radius
