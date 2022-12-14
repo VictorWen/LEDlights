@@ -163,10 +163,10 @@ class ParticleEffect(PhysicsEffect):
         self.new_behaviors.append(behavior)
 
     def clone(self):
-        behaviors = []
-        for behavior in self.init_behaviors:
-            behaviors.append(behavior.clone())
-        return ParticleEffect(self.effect.clone(), self.body.clone(), self.radius, behaviors, self.collidable)
+        # behaviors = []
+        # for behavior in self.init_behaviors:
+        #     behaviors.append(behavior.clone())
+        return ParticleEffect(self.effect.clone(), self.body.clone(), self.radius, self.init_behaviors, self.collidable)
     
 
 class EmitterBehavior(ParticleBehavior):

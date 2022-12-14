@@ -58,6 +58,13 @@ def parse_float(num):
         return num
     except:
         return None
+    
+def parse_int(num):
+    try:
+        num = int(num)
+        return num
+    except:
+        return None
 
 
 class State:
@@ -614,9 +621,9 @@ def randchoice(state, nargs, args):
         
     reroll = -1
     if nargs > 2:
-        reroll = parse_nonzero_int(args[2])
+        reroll = parse_int(args[2])
         if reroll is None:
-            raise Exception(f"Error {args[2]} is not a valid non-zero integer")
+            raise Exception(f"Error {args[2]} is not a valid integer")
     
     state.last_command_result = RandChoice(effects, reroll)
 
@@ -638,9 +645,9 @@ def randtime(state, nargs, args):
     
     reroll = -1
     if nargs > 4:
-        reroll = parse_nonzero_int(args[4])
+        reroll = parse_int(args[4])
         if reroll is None:
-            raise Exception(f"Error {args[4]} is not a valid non-zero integer")
+            raise Exception(f"Error {args[4]} is not a valid integer")
 
     state.last_command_result = RandTime(effect, lower, upper, reroll)
 
@@ -661,9 +668,9 @@ def randwarp(state, nargs, args):
     
     reroll = -1
     if nargs > 4:
-        reroll = parse_nonzero_int(args[4])
+        reroll = parse_int(args[4])
         if reroll is None:
-            raise Exception(f"Error {args[4]} is not a valid non-zero integer")
+            raise Exception(f"Error {args[4]} is not a valid integer")
 
     state.last_command_result = RandWarp(effect, lower, upper, reroll)
     
@@ -678,9 +685,9 @@ def randselect(state, nargs, args):
     
     reroll = -1
     if nargs > 2:
-        reroll = parse_nonzero_int(args[2])
+        reroll = parse_int(args[2])
         if reroll is None:
-            raise Exception(f"Error {args[2]} is not a valid non-zero integer")
+            raise Exception(f"Error {args[2]} is not a valid integer")
     
     state.last_command_result = RandSelector(effect, reroll)
 
@@ -719,9 +726,11 @@ def randpbody(state, nargs ,args):
         if max_acc is None:
             raise Exception(f"Error: {max_acc} is not a valid number")
         
-    reroll = True
+    reroll = -1
     if nargs > 7:
-        reroll = True if args[7] else False
+        reroll = parse_int(args[7])
+        if reroll is None:
+            raise Exception(f"Error {args[7]} is not a valid integer")
 
     state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, reroll)
 

@@ -6,7 +6,7 @@ from config import config
 
 
 SCRIPTS_PATH = config('scripts path', default="./")
-VARS = config('vars', default={})
+CONFIG_VARS = config('vars', default={})
 
 # TERMINALS
 KEYWORD_NODE = "Keyword"
@@ -14,6 +14,7 @@ COMMAND_NODE = "Command"
 NUMBER_NODE = "Number"
 STRING_NODE = "String"
 BOOLEAN_NODE = "Boolean"
+VAR_NODE = "Variable"
 FUNVAR_NODE = "FunVar"
 
 # NON-TERMINALS
@@ -58,8 +59,6 @@ class StackCLI:
         self.state = state
         self.debug = debug
 
-        self.state.vars.update(VARS)
-
         self.end_queue = end_queue
 
         self.queue = []
@@ -73,6 +72,16 @@ class StackCLI:
             "exit"
         ], self.commands, self.state)
         self.evaluator = CommandEvaluator(self.state, self.commands, self)
+        
+        temp_evaulator = NoKeywordCommandEvaluator(self.state, self.commands)
+        
+        for var_name in CONFIG_VARS:
+            var_code = CONFIG_VARS[var_name]
+            tokens = tokenize(var_code)
+            parse_node = self.parser.parse(tokens)
+            self.state.last_command_result = None
+            var_value = temp_evaulator.evaluate(parse_node)
+            self.state.vars[var_name] = Variable(var_code, var_value, self.state.last_command_result != None)
 
     async def run(self):
         self.running = True
@@ -113,6 +122,7 @@ class StackCLI:
                 continue
             tokens = tokenize(input_str)
             parsed_input = self.parser.parse(tokens)
+            # print(parsed_input)
             self.state.last_command_result = None
             eval_obj = await self.evaluator.evaluate(parsed_input)
             if self.state.last_command_result is not None:
@@ -161,13 +171,6 @@ class StackCLI:
             self.state.send(os.getcwd())
             raise Exception("Invalid file")
 
-    def process_let(self, args, nargs):
-        if (nargs < 3):
-            raise Exception("let usage: let VAR_NAME EXPRESSION")
-
-        var_name = args[1]
-        self.state.vars[var_name] = " ".join(args[2:])
-
 
 def tokenize(input_str):
     input_str = input_str.strip()
@@ -209,6 +212,13 @@ def tokenize(input_str):
     if len(built_word) > 0:
         words.append(built_word)
     return words
+
+
+class Variable:
+    def __init__(self, var_code, var_value, is_command=False):
+        self.code = var_code
+        self.value = var_value
+        self.is_command = is_command
 
 
 class ParseNode:
@@ -268,31 +278,13 @@ class CommandParser:
         if self.variable_get_state != 0:
             raise Exception(
                 "Unfinished get variable expression. Usage: get VAR_NAME")
+        if self.variable_fun_state != 0:
+            raise Exception(
+                "Unfinished fun variable expression. Usage: fun FUN_NAME <VAR1> <VAR2> ... = EXPRESSION")
 
     def process_token(self, token, stack):
-        if token == "let":
-            if not self.is_first_token:
-                raise Exception(
-                    "'let' can only be used at the beginning of an expression")
-            self.variable_set_state = AWAITING_LET_NAME
-        elif token == "get":
-            if not self.is_first_token:
-                raise Exception(
-                    "'get' can only be used at the beginning of an expression")
-            self.variable_get_state = AWAITING_GET_NAME
-        elif token == "fun":
-            if not self.is_first_token:
-                raise Exception(
-                    "'fun' can only be used at the beginning of an expression")
-            self.variable_fun_state = AWAITING_FUN_NAME
-
-        elif self.variable_set_state != INITIAL_LET:
-            self._update_variable_set_state(token, stack)
-        elif self.variable_get_state != INITIAL_GET:
-            self._update_variable_get_state(token, stack)
-        elif self.variable_fun_state != INITIAL_FUN:
-            self._update_variable_fun_state(token, stack)
-
+        if (self._check_state_machines(token, stack)): 
+            pass
         elif token == "(":
             stack.append('(')
         elif token == ")":
@@ -317,8 +309,6 @@ class CommandParser:
 
         if len(arguments) == 0:
             raise Exception(f"Invalid object token length")
-        if arguments[0].type != COMMAND_NODE:
-            raise Exception(f"Unknown command: {arguments[0].value}")
 
         object_node = ParseNode(type=OBJECT_NODE, children=arguments)
         stack.append(object_node)
@@ -355,10 +345,7 @@ class CommandParser:
         elif token in self.commands:
             return ParseNode(type=COMMAND_NODE, value=token)
         elif token in self.variables:
-            var_value = self.variables[token]
-            var_tokens = tokenize(var_value)
-            parser = CommandParser(self.keywords, self.commands, self.state)
-            return parser.parse(var_tokens)
+            return ParseNode(type=VAR_NODE, value=token)
         else:
             raise Exception(f"{token} is an undefined symbol")
         
@@ -368,6 +355,41 @@ class CommandParser:
         if token in self.keywords or token in self.commands or token in BOOLEAN_TOKENS:
             raise Exception(
                 f"Invalid variable name: {token} is already a reserved value")
+            
+    def _check_state_machines(self, token, stack):
+        if token == "let":
+            if not self.is_first_token:
+                raise Exception(
+                    "'let' can only be used at the beginning of an expression")
+            self.variable_set_state = AWAITING_LET_NAME
+            return True
+        elif token == "get":
+            if not self.is_first_token:
+                raise Exception(
+                    "'get' can only be used at the beginning of an expression")
+            self.variable_get_state = AWAITING_GET_NAME
+            return True
+        elif token == "fun":
+            if not self.is_first_token:
+                raise Exception(
+                    "'fun' can only be used at the beginning of an expression")
+            self.variable_fun_state = AWAITING_FUN_NAME
+            return True
+        elif self._update_state_machines(token, stack):
+            return True
+        return False
+
+    def _update_state_machines(self, token, stack):
+        if self.variable_set_state != INITIAL_LET:
+            self._update_variable_set_state(token, stack)
+            return True
+        elif self.variable_get_state != INITIAL_GET:
+            self._update_variable_get_state(token, stack)
+            return True
+        elif self.variable_fun_state != INITIAL_FUN:
+            self._update_variable_fun_state(token, stack)
+            return True
+        return False
 
     def _update_variable_set_state(self, token, stack):
         if self.variable_set_state == AWAITING_LET_NAME:
@@ -381,13 +403,19 @@ class CommandParser:
         elif self.variable_set_state == AWAITING_LET_VALUE:
             self.variable_set_state = INITIAL_LET
             var_name = stack.pop(-1)
-            self.variables[var_name] = token
+            tokens = tokenize(token)
+            temp_parser = CommandParser({}, self.commands, self.state)
+            parse_node = temp_parser.parse(tokens)
+            temp_eval = NoKeywordCommandEvaluator(self.state, self.commands)
+            self.state.last_command_result = None
+            var_value = temp_eval.evaluate(parse_node)
+            self.variables[var_name] = Variable(token, var_value, is_command=self.state.last_command_result != None)
     
     def _update_variable_get_state(self, token, stack):
         if self.variable_get_state == AWAITING_GET_NAME:
             self.variable_get_state = INITIAL_GET
             if token in self.variables:
-                self.state.send(self.variables[token])
+                self.state.send(self.variables[token].code)
             else:
                 raise Exception(f"Undefined variable name: {token}")
             
@@ -426,6 +454,8 @@ class CommandEvaluator():
             return await self.eval_list(parse_root)
         elif parse_type == FUNVAR_NODE:
             return self.eval_funvar(parse_root)
+        elif parse_type == VAR_NODE:
+            return self.eval_var(parse_root)
         elif parse_type == KEYWORD_NODE:
             return await self.eval_keyword(parse_root.value, [parse_root.value])
         elif parse_type == COMMAND_NODE:
@@ -463,13 +493,25 @@ class CommandEvaluator():
         eval_children = []
         for child in list_node.children:
             eval_children.append(await self.evaluate(child))
+        self.state.last_command_result = None
         return eval_children
 
     def eval_funvar(self, funvar):
-        if funvar not in self.fun_vars:
-            raise Exception(f"Unknown function variable {funvar}")
+        funvar_name = funvar.value
+        if funvar_name not in self.fun_vars:
+            raise Exception(f"Unknown function variable {funvar_name}")
         else:
-            return self.fun_vars[funvar]
+            return self.fun_vars[funvar_name]
+        
+    def eval_var(self, var_node):
+        if var_node.value not in self.state.vars:
+            raise Exception(f"Unknown variable {var_node.value}")
+        var = self.state.vars[var_node.value]
+        if var.is_command:
+            value = var.value.clone()
+            self.state.last_command_result = value
+            return value
+        return var.value
 
     async def eval_keyword(self, keyword_name, args):
         if self.cli_controller is not None:
@@ -502,20 +544,22 @@ class FunctionCommand():
 
 
 class NoKeywordCommandEvaluator:
-    def __init__(self, state, command_dict, cli_controller=None, fun_vars={}):
+    def __init__(self, state, command_dict, fun_vars={}):
         self.state = state
         self.commands = command_dict
-        self.cli_controller = cli_controller
         self.fun_vars = fun_vars
 
     def evaluate(self, parse_root: ParseNode):
+        self.state.last_command_result = None
         parse_type = parse_root.type
         if parse_type == OBJECT_NODE:
             return self.eval_object(parse_root)
         elif parse_type == LIST_NODE:
             return self.eval_list(parse_root)
         elif parse_type == FUNVAR_NODE:
-            return self.eval_funvar(parse_root.value)
+            return self.eval_funvar(parse_root)
+        elif parse_type == VAR_NODE:
+            return self.eval_var(parse_root)
         elif parse_type == KEYWORD_NODE:
             raise Exception("Cannot use keywords")
         elif parse_type == COMMAND_NODE:
@@ -553,13 +597,26 @@ class NoKeywordCommandEvaluator:
         eval_children = []
         for child in list_node.children:
             eval_children.append(self.evaluate(child))
+        self.state.last_command_result = None
         return eval_children
 
     def eval_funvar(self, funvar):
-        if funvar not in self.fun_vars:
-            raise Exception(f"Unknown function variable {funvar}")
+        funvar_name = funvar.value
+        if funvar_name not in self.fun_vars:
+            raise Exception(f"Unknown function variable {funvar_name}")
         else:
-            return self.fun_vars[funvar]
+            return self.fun_vars[funvar_name]
+    
+    def eval_var(self, var_node):
+        if var_node.value not in self.state.vars:
+            raise Exception(f"Unknown variable {var_node.value}")
+        var = self.state.vars[var_node.value]
+        if var.is_command:
+            value = var.value.clone()
+            self.state.last_command_result = value
+            return value
+        else:
+            return var.value
 
     def eval_command(self, command_name, args):
         command = self.commands[command_name]
