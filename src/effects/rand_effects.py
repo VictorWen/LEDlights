@@ -1,12 +1,12 @@
 import math
 from ..color_utils import *
-from .effects import DYNAMIC, STATIC, BaseEffect
+from .effects import DYNAMIC, STATIC, BaseEffect, is_all_static
 import random
 from .physics_effects import PhysicsBody
 
 class RandChoice(BaseEffect):
     def __init__(self, effects, rerolls=-1) -> None:
-        super().__init__(effect.type)
+        super().__init__(is_all_static(effects))
         self.effects = effects
         self.rerolls = rerolls
         self.effect = random.choice(self.effects)

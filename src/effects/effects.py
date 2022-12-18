@@ -41,8 +41,8 @@ def fill_select(pixels, selector):
 def is_all_static(effects):
     for effect in effects:
         if effect.type != STATIC:
-            return False
-    return True
+            return DYNAMIC
+    return STATIC
 
 
 class BaseEffect:
