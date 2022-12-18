@@ -142,17 +142,17 @@ def crop(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     size = parse_nonzero_int(args[2])
     if size is None:
-        raise Exception(f'Error {args[2]} is not a valid SIZE')
+        raise Exception(f'Error: {args[2]} is not a valid SIZE')
 
     offset = 0
     if nargs == 4:
         offset = parse_nonzero_int(args[3])
         if offset is None:
-            raise Exception(f'Error {args[3]} is not a valid OFFSET')
+            raise Exception(f'Error: {args[3]} is not a valid OFFSET')
 
     state.last_command_result = CropEffect(effect, size, offset)
 
@@ -163,11 +163,11 @@ def resize(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     size = parse_nonzero_int(args[2])
     if size is None:
-        raise Exception(f'Error {args[2]} is not a valid SIZE')
+        raise Exception(f'Error: {args[2]} is not a valid SIZE')
 
     state.last_command_result = ResizeEffect(effect, size)
 
@@ -205,11 +205,11 @@ def blink(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = BlinkEffect(effect, time)
 
@@ -220,11 +220,11 @@ def color_wipe(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = ColorWipe(effect, time)
 
@@ -235,11 +235,11 @@ def fade_in(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = FadeIn(effect, time)
 
@@ -250,11 +250,11 @@ def fade_out(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = FadeOut(effect, time)
 
@@ -265,11 +265,11 @@ def blink_fade(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = BlinkFade(effect, time)
 
@@ -280,15 +280,15 @@ def wave(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid PERIOD')
+        raise Exception(f'Error: {args[2]} is not a valid PERIOD')
 
     length = parse_nonzero_float(args[3])
     if (time is None):
-        raise Exception(f'Error {args[3]} is not a valid WAVELENGTH')
+        raise Exception(f'Error: {args[3]} is not a valid WAVELENGTH')
 
     state.last_command_result = WaveEffect(effect, time, length)
 
@@ -299,11 +299,11 @@ def wheel(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = WheelEffect(effect, time)
 
@@ -314,11 +314,11 @@ def wipe(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = WipeEffect(effect, time)
 
@@ -329,11 +329,11 @@ def slide(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     time = parse_nonzero_float(args[2])
     if (time is None):
-        raise Exception(f'Error {args[2]} is not a valid TIME')
+        raise Exception(f'Error: {args[2]} is not a valid TIME')
 
     state.last_command_result = SlidingEffect(effect, time)
 
@@ -351,7 +351,7 @@ def play_music(state, nargs, args):
             audio_stream = audio_stream.raw
         except BaseException as error:
             # raise Exception(str(error))
-            raise Exception(f"Error loading spotify")
+            raise Exception(f"Error: loading spotify")
 
         state.last_command_result = PlayMusicStream(audio_stream)
         return
@@ -370,13 +370,13 @@ def play_music(state, nargs, args):
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
             raise Exception(str(error))
-            # raise Exception(f"Error loading {file} from youtube")
+            # raise Exception(f"Error: loading {file} from youtube")
 
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
-            raise Exception(f"Error {file} is not a valid FILENAME")
+            raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = PlayMusic(wavfile)
 
@@ -387,7 +387,7 @@ def spectrum(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     file = args[2]
     if file == "spotify":
@@ -397,7 +397,7 @@ def spectrum(state, nargs, args):
             audio_stream = audio_stream.raw
         except BaseException as error:
             # raise Exception(str(error))
-            raise Exception(f"Error loading spotify")
+            raise Exception(f"Error: loading spotify")
 
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback)
@@ -417,13 +417,13 @@ def spectrum(state, nargs, args):
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
             print(error)
-            raise Exception(f"Error loading {file} from youtube")
+            raise Exception(f"Error: loading {file} from youtube")
 
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
-            raise Exception(f"Error {file} is not a valid FILENAME")
+            raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(effect, wavfile, state.playback)
 
@@ -434,7 +434,7 @@ def piano(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
 
     file = args[2]
     if file == "spotify":
@@ -444,7 +444,7 @@ def piano(state, nargs, args):
             audio_stream = audio_stream.raw
         except BaseException as error:
             # raise Exception(str(error))
-            raise Exception(f"Error loading spotify")
+            raise Exception(f"Error: loading spotify")
 
         state.last_command_result = SpectrumEffectStream(
             effect, audio_stream, playback=state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
@@ -464,13 +464,13 @@ def piano(state, nargs, args):
             wavfile = wav.open(process.stdout, 'rb')
         except BaseException as error:
             print(error)
-            raise Exception(f"Error loading {file} from youtube")
+            raise Exception(f"Error: loading {file} from youtube")
 
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
         except:
-            raise Exception(f"Error {file} is not a valid FILENAME")
+            raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(
         effect, wavfile, state.playback, linear=False, nbins=88, min_freq=26, max_freq=4430)
@@ -506,48 +506,56 @@ def physics(state, nargs, args):
 
     particles = args[1]
     if not isinstance(particles, list):
-        raise Exception(f"Error {args[1]} is not a list of particles")
+        raise Exception(f"Error: {args[1]} is not a list of particles")
     for particle in particles:
         if not isinstance(particle, PhysicsEffect):
-            raise Exception(f"Error {args[1]} is not a list of particles, {particle} is not a valid effect")
-        
-    # gravity = parse_float(args[2])
-    # if gravity is None:
-    #     raise Exception(f"Error: {gravity} is an invalid GRAVITY")
+            raise Exception(f"Error: {args[1]} is not a list of particles, {particle} is not a valid effect")
     
     state.last_command_result = PhysicsEngine(particles)
     
 
 def particle(state, nargs, args):
-    if nargs not in [4, 5, 6]:
-        raise Exception(f"Format: {args[0]} EFFECT PBODY RADIUS <[BEHAVIORS]> <IS-COLLIDABLE>")
+    if nargs not in [4, 5, 6, 7]:
+        raise Exception(f"Format: {args[0]} EFFECT PBODY RADIUS <[BEHAVIORS]> <IS-COLLIDABLE> <[TAGS]>")
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f"Error {args[1]} is not a valid effect")
+        raise Exception(f"Error: {args[1]} is not a valid effect")
 
     pbody = args[2]
     if not isinstance(pbody, PhysicsBody):
-        raise Exception(f'Error {pbody} is not a valid PBODY')
+        raise Exception(f'Error: {pbody} is not a valid PBODY')
 
     radius = parse_float(args[3])
     if radius is None:
-        raise Exception(f"Error {args[3]} is not a valid RADIUS")
+        raise Exception(f"Error: {args[3]} is not a valid RADIUS")
     
     behaviors = []
     if nargs > 4:
         behaviors = args[4]
         if not isinstance(behaviors, list):
-            raise Exception(f"Error {args[4]} is not a list of behaviors")
+            raise Exception(f"Error: {args[4]} is not a list of behaviors")
         for behavior in behaviors:
             if not isinstance(behavior, ParticleBehavior):
-                raise Exception(f"Error {args[4]} is not a list of behaviors, {behavior} is not a valid particle behavior")
+                raise Exception(f"Error: {args[4]} is not a list of behaviors, {behavior} is not a valid particle behavior")
     
     collidable = False
     if nargs > 5:
         collidable = True if args[5] else False
-
-    state.last_command_result = ParticleEffect(effect, pbody, radius, behaviors, collidable)
+        
+    tags = []
+    if nargs > 6:
+        tags = args[6]
+        if not isinstance(tags, list):
+            raise Exception(f"Error: {args[6]} is not a list of tags or strings")
+        for i in range(len(tags)):
+            tag = tags[i]
+            if isinstance(tag, str):
+                tags[i] = Tag(tag)
+            elif not isinstance(tag, Tag):
+                raise Exception(f"Error: {args[6]} is not a list of tags or strings, {tag} is not a valid tag")
+            
+    state.last_command_result = ParticleEffect(effect, pbody, radius, behaviors, collidable, tags)
 
 
 def emitter(state, nargs, args):
@@ -556,11 +564,11 @@ def emitter(state, nargs, args):
     
     emission = args[1]
     if not isinstance(emission, ParticleEffect):
-        raise Exception(f"Error {emission} is not a valid EMISSION, must be a particle")
+        raise Exception(f"Error: {emission} is not a valid EMISSION, must be a particle")
     
     density = parse_nonzero_float(args[2])
     if density is None or density <= 0:
-        raise Exception(f"Error {args[2]} is not a valid DENSITY, must be a positive number")
+        raise Exception(f"Error: {args[2]} is not a valid DENSITY, must be a positive number")
 
     state.last_command_result = EmitterBehavior(emission, density)
 
@@ -571,35 +579,47 @@ def explosion(state, nargs, args):
     
     emission = args[1]
     if not isinstance(emission, ParticleEffect):
-        raise Exception(f"Error {emission} is not a valid EMISSION, must be a particle")
+        raise Exception(f"Error: {emission} is not a valid EMISSION, must be a particle")
     
     density = parse_nonzero_int(args[2])
     if density is None or density <= 0:
-        raise Exception(f"Error {args[2]} is not a valid DENSITY, must be a positive number")
+        raise Exception(f"Error: {args[2]} is not a valid DENSITY, must be a positive number")
     
     fuse = parse_float(args[3])
     if fuse is None or fuse < 0:
-        raise Exception(f"Error {args[3]} is not a valid FUSE, must be a non-negative number")
+        raise Exception(f"Error: {args[3]} is not a valid FUSE, must be a non-negative number")
 
     state.last_command_result = ExplosionBehavior(emission, density, fuse)
     
 
 def collision(state, nargs, args):
-    if nargs not in [2, 3]:
-        raise Exception(f"Format: {args[0]} [BEHAVIORS] <IS-ONCE>")
+    if nargs not in [2, 3, 4]:
+        raise Exception(f"Format: {args[0]} [BEHAVIORS] <IS-ONCE> <[TAGS]>")
 
     behaviors = args[1]
     if not isinstance(behaviors, list):
-        raise Exception(f"Error {args[1]} is not a list of behaviors")
+        raise Exception(f"Error: {args[1]} is not a list of behaviors")
     for behavior in behaviors:
         if not isinstance(behavior, ParticleBehavior):
-            raise Exception(f"Error {args[41]} is not a list of behaviors, {behavior} is not a valid particle behavior")
+            raise Exception(f"Error: {args[41]} is not a list of behaviors, {behavior} is not a valid particle behavior")
         
     once = True
     if nargs > 2:
         once = True if args[2] else False
+        
+    tags = []
+    if nargs > 3:
+        tags = args[3]
+        if not isinstance(tags, list):
+            raise Exception(f"Error: {args[3]} is not a list of tags or strings")
+        for i in range(len(tags)):
+            tag = tags[i]
+            if isinstance(tag, str):
+                tags[i] = Tag(tag)
+            elif not isinstance(tag, Tag):
+                raise Exception(f"Error: {args[3]} is not a list of tags or strings, {tag} is not a valid tag")
     
-    state.last_command_result = CollisionBehavior(behaviors, once)
+    state.last_command_result = CollisionBehavior(behaviors, once, tags)
 
 
 def life(state, nargs, args):
@@ -608,7 +628,7 @@ def life(state, nargs, args):
     
     lifetime = parse_float(args[1])
     if lifetime is None or lifetime < 0:
-        raise Exception(f"Format: {args[1]} is not a valid HALF-LIFE")
+        raise Exception(f"Error: {args[1]} is not a valid HALF-LIFE")
     
     state.last_command_result = LifetimeBehavior(lifetime)
 
@@ -619,10 +639,40 @@ def decay(state, nargs, args):
     
     half_life = parse_nonzero_float(args[1])
     if half_life is None or half_life <= 0:
-        raise Exception(f"Format: {args[1]} is not a valid HALF-LIFE")
+        raise Exception(f"Error: {args[1]} is not a valid HALF-LIFE")
     
     state.last_command_result = DecayBehavior(half_life)
     
+    
+def tag(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} NAME")
+    
+    name = args[1]
+    if not isinstance(name, str):
+        raise Exception(f"Error: {args[1]} is not a valid string")
+    
+    state.last_command_result = Tag(name)
+
+
+def counttag(state, nargs, args):
+    if nargs not in [1, 2, 3]:
+        raise Exception(f"Format: {args[0]} <START> <PREFIX>")
+    
+    start = 0
+    if nargs > 1:
+        start = parse_int(args[1])
+        if start is None:
+            raise Exception(f"Error: {args[1]} is not a valid integer")
+    
+    prefix = ""
+    if nargs > 2:
+        prefix = args[2]
+        if not isinstance(prefix, str):
+            raise Exception(f"Error: {args[2]} is not a valid string")
+    
+    state.last_command_result = CountingTag(start, prefix)
+
 
 def randchoice(state, nargs, args):
     if nargs not in [2, 3]:
@@ -630,16 +680,16 @@ def randchoice(state, nargs, args):
     
     effects = args[1]
     if not isinstance(effects, list):
-        raise Exception(f"Error {args[1]} is not a list of effects")
+        raise Exception(f"Error: {args[1]} is not a list of effects")
     for effect in effects:
         if not isinstance(effect, BaseEffect):
-            raise Exception(f"Error {args[1]} is not a list of effects, {effect} is not a valid effect")
+            raise Exception(f"Error: {args[1]} is not a list of effects, {effect} is not a valid effect")
         
     reroll = -1
     if nargs > 2:
         reroll = parse_int(args[2])
         if reroll is None:
-            raise Exception(f"Error {args[2]} is not a valid integer")
+            raise Exception(f"Error: {args[2]} is not a valid integer")
     
     state.last_command_result = RandChoice(effects, reroll)
 
@@ -650,20 +700,20 @@ def randtime(state, nargs, args):
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
     
     lower = parse_float(args[2])
     if lower is None:
-        raise Exception(f"Error {args[2]} is not a valid number")
+        raise Exception(f"Error: {args[2]} is not a valid number")
     upper = parse_float(args[3])
     if upper is None:
-        raise Exception(f"Error {args[3]} is not a valid number")
+        raise Exception(f"Error: {args[3]} is not a valid number")
     
     reroll = -1
     if nargs > 4:
         reroll = parse_int(args[4])
         if reroll is None:
-            raise Exception(f"Error {args[4]} is not a valid integer")
+            raise Exception(f"Error: {args[4]} is not a valid integer")
 
     state.last_command_result = RandTime(effect, lower, upper, reroll)
 
@@ -673,20 +723,20 @@ def randwarp(state, nargs, args):
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
     
     lower = parse_float(args[2])
     if lower is None:
-        raise Exception(f"Error {args[2]} is not a valid number")
+        raise Exception(f"Error: {args[2]} is not a valid number")
     upper = parse_float(args[3])
     if upper is None:
-        raise Exception(f"Error {args[3]} is not a valid number")
+        raise Exception(f"Error: {args[3]} is not a valid number")
     
     reroll = -1
     if nargs > 4:
         reroll = parse_int(args[4])
         if reroll is None:
-            raise Exception(f"Error {args[4]} is not a valid integer")
+            raise Exception(f"Error: {args[4]} is not a valid integer")
 
     state.last_command_result = RandWarp(effect, lower, upper, reroll)
     
@@ -697,13 +747,13 @@ def randselect(state, nargs, args):
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
     
     reroll = -1
     if nargs > 2:
         reroll = parse_int(args[2])
         if reroll is None:
-            raise Exception(f"Error {args[2]} is not a valid integer")
+            raise Exception(f"Error: {args[2]} is not a valid integer")
     
     state.last_command_result = RandSelector(effect, reroll)
 
@@ -746,7 +796,7 @@ def randpbody(state, nargs ,args):
     if nargs > 7:
         reroll = parse_int(args[7])
         if reroll is None:
-            raise Exception(f"Error {args[7]} is not a valid integer")
+            raise Exception(f"Error: {args[7]} is not a valid integer")
 
     state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, reroll)
     
@@ -757,13 +807,13 @@ def share(state, nargs, args):
     
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
     
     reclones = 0
     if nargs > 2:
         reclones = parse_int(args[2])
         if reclones is None:
-            raise Exception(f"Error {args[2]} is not a valid integer")
+            raise Exception(f"Error: {args[2]} is not a valid integer")
     state.last_command_result = ShareEffect(effect, reclones)
 
 
@@ -777,7 +827,7 @@ def debugclone(state, nargs, args):
     if nargs > 2:
         effect = args[2]
         if not isinstance(effect, BaseEffect):
-            raise Exception(f"Error {args[2]} is not a valid EFFECT")
+            raise Exception(f"Error: {args[2]} is not a valid EFFECT")
     
     state.last_command_result = DebugClone(id, state.send, effect=effect)
     
@@ -788,7 +838,7 @@ def parent(state, nargs, args):
 
     effect = args[1]
     if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
     
     state.last_command_result = Parent(effect)
     
@@ -799,7 +849,7 @@ def child(state, nargs, args):
 
     parent = args[1]
     if not isinstance(parent, Parent):
-        raise Exception(f'Error {args[1]} is not a valid PARENT')
+        raise Exception(f'Error: {args[1]} is not a valid PARENT')
     
     state.last_command_result = Child(parent)
 
@@ -944,6 +994,9 @@ commands = [
     Command("collision", collision, "EFFECT"),
     Command("life", life, "EFFECT"),
     Command("decay", decay, "EFFECT"),
+    
+    Command("tag", tag, "EFFECT"),
+    Command("counttag", counttag, "EFFECT"),
     
     Command("randchoice", randchoice, "EFFECT"),
     Command("randtime", randtime, "EFFECT"),

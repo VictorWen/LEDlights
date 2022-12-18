@@ -47,54 +47,6 @@ class PhysicsEngine(BaseEffect):
         return PhysicsEngine(effects)
 
 
-class PhysicsEffect(BaseEffect):
-    def __init__(self, body, collidable=False, bounds=3):
-        super().__init__()
-        self.body = body
-        self.is_alive = True
-        self.collidable = collidable
-        self.has_collision = False
-        self.notify_collision = False
-        self.bounds = bounds
-
-    def tick(self, engine, _, time_delta):
-        if not self.is_alive:
-            return
-        self.body.tick(time_delta)
-        if self.collidable:
-            self.has_collision = self.notify_collision
-            self.notify_collision = False
-            self.detect_collision(engine)
-        
-    def detect_collision(self, engine):        
-        a = min(self.body.prev_pos, self.body.position)
-        b = max(self.body.prev_pos, self.body.position)
-        
-        for other_particle in engine.effects:
-            if other_particle is self or not other_particle.collidable:
-                continue
-            if a < other_particle.body.position <= b:
-                self.has_collision = True
-                other_particle.notify_collision = True
-        
-    def get_pixel(self, index):
-        return (0, 0, 0)
-
-    def clone(self):
-        return PhysicsEffect(self.body, self.collidable)
-    
-
-class ParticleBehavior():
-    def __init__(self):
-        pass
-    
-    def tick(self, engine, particle, time_delta):
-        pass
-    
-    def clone(self):
-        raise NotImplementedError()
-
-
 class PhysicsBody():
     def __init__(self, pos, vel, acc):
         self.position = pos
@@ -111,9 +63,54 @@ class PhysicsBody():
         return PhysicsBody(self.position, self.velocity, self.acceleration)
 
 
+class PhysicsEffect(BaseEffect):
+    def __init__(self, body, collidable=False, tags=[], bounds=3):
+        super().__init__()
+        self.body = body
+        self.is_alive = True
+        self.collidable = collidable
+        self.tags = set(tags)
+        self.has_collision = False
+        self.notify_collision = False
+        self.collisions = set()
+        self.notify_collisions = set()
+        self.bounds = bounds
+
+    def tick(self, engine, _, time_delta):
+        if not self.is_alive:
+            return
+        self.body.tick(time_delta)
+        if self.collidable:
+            self.has_collision = self.notify_collision
+            self.collisions = self.notify_collisions
+            self.notify_collision = False
+            self.notify_collisions = set()
+            self.detect_collision(engine)
+        
+    def detect_collision(self, engine):        
+        a = min(self.body.prev_pos, self.body.position)
+        b = max(self.body.prev_pos, self.body.position)
+        
+        for other_effect in engine.effects:
+            if other_effect is self or not other_effect.collidable:
+                continue
+            if a < other_effect.body.position <= b:
+                self.has_collision = True
+                self.collisions.add(other_effect)
+                other_effect.notify_collision = True
+                other_effect.notify_collisions.add(self)
+        
+    def get_pixel(self, index):
+        return (0, 0, 0)
+
+    def clone(self):
+        tags = [tag.clone() for tag in self.tags]
+        return PhysicsEffect(self.body, self.collidable, tags=tags, bounds=self.bounds)
+
+
 class ParticleEffect(PhysicsEffect):
-    def __init__(self, effect, pbody, radius, behaviors=[], collidable=False):
-        super().__init__(pbody, collidable, int(3 * radius + 1))
+    def __init__(self, effect, pbody, radius, behaviors=[], collidable=False, tags=[]):
+        super().__init__(pbody, collidable, tags, int(3 * radius + 1))
         self.effect = effect
         self.radius = radius
         
@@ -162,8 +159,20 @@ class ParticleEffect(PhysicsEffect):
         behaviors = []
         for behavior in self.init_behaviors:
             behaviors.append(behavior.clone())
-        return ParticleEffect(effect, body, self.radius, behaviors, self.collidable)
+        tags = [tag.clone() for tag in self.tags]
+        return ParticleEffect(effect, body, self.radius, behaviors, self.collidable, tags)
     
+
+class ParticleBehavior():
+    def __init__(self):
+        pass
+    
+    def tick(self, engine, particle, time_delta):
+        pass
+    
+    def clone(self):
+        raise NotImplementedError()
+
 
 class EmitterBehavior(ParticleBehavior):
     def __init__(self, emission, density):
@@ -216,27 +225,28 @@ class ExplosionBehavior(ParticleBehavior):
 
 
 class CollisionBehavior(ParticleBehavior):
-    def __init__(self, behaviors, once=True):
+    def __init__(self, behaviors, once=True, tags=[]):
         super().__init__()
         self.behaviors = behaviors
         self.once = once
         self.fired = False
+        self.tags = set(tags)
     
     def tick(self, engine, particle, time_delta):
-        if not particle.has_collision:
+        if not particle.has_collision or (self.once and self.fired and particle.is_alive):
             return
-        if not self.once or not self.fired:
-            for behavior in self.behaviors:
-                b = behavior.clone()
-                b.tick(engine, particle, 0)
-                particle.add_behavior(b)
-            self.fired = True
+        for collider in particle.collisions:
+            if (not self.once or not self.fired) and particle.is_alive and self.tags.issubset(collider.tags):
+                for behavior in self.behaviors:
+                    b = behavior.clone()
+                    b.tick(engine, particle, 0)
+                    particle.add_behavior(b)
+                self.fired = True
     
     def clone(self):
-        behaviors = []
-        for behavior in self.behaviors:
-            behaviors.append(behavior.clone())
-        return CollisionBehavior(behaviors, self.once)
+        behaviors = [behavior.clone() for behavior in self.behaviors]
+        tags = [tag.clone() for tag in self.tags]
+        return CollisionBehavior(behaviors, self.once, tags)
 
 
 class LifetimeBehavior(ParticleBehavior):
@@ -266,3 +276,36 @@ class DecayBehavior(ParticleBehavior):
     
     def clone(self):
         return DecayBehavior(self.half_life)
+    
+    
+class Tag:
+    def __init__(self, string):
+        self.string = string
+        
+    def __repr__(self):
+        return self.string
+    
+    def __eq__(self, other):
+        return self.string == other
+    
+    def __ne__(self, other):
+        return self.string != other
+    
+    def __hash__(self):
+        return self.string.__hash__() 
+        
+    def clone(self):
+        return Tag(self.string)
+    
+
+class CountingTag(Tag):
+    def __init__(self, start=0, prefix=""):
+        super().__init__(f"{prefix}{start}")
+        self.start = start
+        
+    def __repr__(self):
+        return self.string
+        
+    def clone(self):
+        self.start += 1
+        return CountingTag(self.start)

@@ -1,0 +1,6 @@
+fun Spark color = (particle (gradient color BLACK) (randpbody 0 0 -30 30) 0.35 [(decay 0.625) (life 5)])
+
+let ParticleA = (particle (gradient RED BLACK) (pbody 0 30) 0.35 [(collision [(life 0) (explosion (Spark (rgb 224 0 32)) 5 0)] true ["B"])] true ["A"])
+let ParticleB = (particle (gradient BLUE BLACK) (pbody 150 -30) 0.35 [(collision [(life 0) (explosion (Spark (rgb 42 0 224)) 5 0)] true ["B"])] true ["B"])
+
+physics [ParticleA ParticleB]
