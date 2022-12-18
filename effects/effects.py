@@ -36,6 +36,13 @@ def fill_select(pixels, selector):
     for i in range(n):
         pixels[i] = selector.get_color(i/n)
     pixels.show()
+    
+
+def is_all_static(effects):
+    for effect in effects:
+        if effect.type != STATIC:
+            return False
+    return True
 
 
 class BaseEffect:
@@ -65,7 +72,7 @@ class ColorAdapter(BaseEffect):
 
 class DynamicSplit(BaseEffect):
     def __init__(self, color_effects):
-        super().__init__()
+        super().__init__(is_all_static(color_effects))
         if isinstance(color_effects, list):
             self.effects = color_effects
         else:
@@ -94,7 +101,7 @@ class DynamicSplit(BaseEffect):
 
 class DynamicGradient(BaseEffect):
     def __init__(self, color_effects, sampling_weights=-1):
-        super().__init__()
+        super().__init__(is_all_static(color_effects))
         if isinstance(color_effects, list):
             self.effects = color_effects
         else:

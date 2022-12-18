@@ -6,7 +6,7 @@ from effects.physics_effects import PhysicsBody
 
 class RandChoice(BaseEffect):
     def __init__(self, effects, rerolls=-1) -> None:
-        super().__init__()
+        super().__init__(effect.type)
         self.effects = effects
         self.rerolls = rerolls
         self.effect = random.choice(self.effects)
@@ -23,7 +23,7 @@ class RandChoice(BaseEffect):
 
 class RandTime(BaseEffect):
     def __init__(self, effect, lower, upper, rerolls=-1) -> None:
-        super().__init__()
+        super().__init__(effect.type)
         self.effect = effect
         self.lower = lower
         self.upper = upper
@@ -49,7 +49,7 @@ class RandTime(BaseEffect):
 
 class RandWarp(BaseEffect):
     def __init__(self, effect, lower, upper, rerolls=-1) -> None:
-        super().__init__()
+        super().__init__(effect.type)
         self.effect = effect
         self.lower = lower
         self.upper = upper
@@ -70,17 +70,20 @@ class RandWarp(BaseEffect):
 
 class RandSelector(BaseEffect):
     def __init__(self, effect, rerolls=-1):
-        super().__init__()
+        super().__init__(effect.type)
         self.effect = effect
         self.index = random.random()
         self.rerolls = rerolls
+        self.color = None
         
     def tick(self, pixels, time_delta):
-        colors = clone_pixels(pixels)
-        self.effect.tick(colors, time_delta)
+        if self.color is None or self.effect.type == DYNAMIC:
+            colors = clone_pixels(pixels)
+            self.effect.tick(colors, time_delta)
+            N = len(pixels)
+            self.color = colors[int(N * self.index)]
         
-        N = len(pixels)
-        fill_pixels(pixels, colors[int(N * self.index)])
+        fill_pixels(pixels, self.color)
     
     def clone(self):
         if self.rerolls != 0:

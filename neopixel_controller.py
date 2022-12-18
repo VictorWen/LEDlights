@@ -142,7 +142,7 @@ class NeoPixelController:
             colors = merge_layers(self.layers, self.merge_behavior)
             for i in range(self.N):
                 self.pixels[i] = colors[i]
-            self.pixels[0] = (255, 255, 255)
+            # self.pixels[0] = (255, 255, 255)
             self.pixels.show()
 
             await asyncio.sleep(0.001)

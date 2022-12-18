@@ -2,6 +2,7 @@ from effects.effects import *
 from effects.physics_effects import *
 from effects.positional_effects import *
 from effects.rand_effects import *
+from effects.control_effects import *
 from colors import *
 import asyncio
 from effects.music_effects import *
@@ -135,7 +136,7 @@ def split(state, nargs, args):
     state.last_command_result = DynamicSplit(color_effects)
 
 
-def size(state, nargs, args):
+def crop(state, nargs, args):
     if nargs < 3 or nargs > 4:
         raise Exception(f"Format: {args[0]} EFFECT SIZE OFFSET")
 
@@ -153,7 +154,22 @@ def size(state, nargs, args):
         if offset is None:
             raise Exception(f'Error {args[3]} is not a valid OFFSET')
 
-    state.last_command_result = SizeEffect(effect, size, offset)
+    state.last_command_result = CropEffect(effect, size, offset)
+
+
+def resize(state, nargs, args):
+    if nargs != 3:
+        raise Exception(f"Format: {args[0]} EFFECT SIZE")
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+
+    size = parse_nonzero_int(args[2])
+    if size is None:
+        raise Exception(f'Error {args[2]} is not a valid SIZE')
+
+    state.last_command_result = ResizeEffect(effect, size)
 
 
 def rainbow(state, nargs, args):
@@ -733,6 +749,59 @@ def randpbody(state, nargs ,args):
             raise Exception(f"Error {args[7]} is not a valid integer")
 
     state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, reroll)
+    
+    
+def share(state, nargs, args):
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} EFFECT <RECLONES>")
+    
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+    
+    reclones = 0
+    if nargs > 2:
+        reclones = parse_int(args[2])
+        if reclones is None:
+            raise Exception(f"Error {args[2]} is not a valid integer")
+    state.last_command_result = ShareEffect(effect, reclones)
+
+
+def debugclone(state, nargs, args):
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} ID <EFFECT>")
+    
+    id = str(args[1])
+    
+    effect = None
+    if nargs > 2:
+        effect = args[2]
+        if not isinstance(effect, BaseEffect):
+            raise Exception(f"Error {args[2]} is not a valid EFFECT")
+    
+    state.last_command_result = DebugClone(id, state.send, effect=effect)
+    
+    
+def parent(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} EFFECT")
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error {args[1]} is not a valid EFFECT')
+    
+    state.last_command_result = Parent(effect)
+    
+
+def child(state, nargs, args):
+    if nargs != 2:
+        raise Exception(f"Format: {args[0]} PARENT")
+
+    parent = args[1]
+    if not isinstance(parent, Parent):
+        raise Exception(f'Error {args[1]} is not a valid PARENT')
+    
+    state.last_command_result = Child(parent)
 
 
 def brightness(state, nargs, args):
@@ -849,7 +918,8 @@ commands = [
     Command("rgb", rgb, "EFFECT"),
     Command("hex", hex, "EFFECT"),
 
-    Command("size", size, "EFFECT"),
+    Command("crop", crop, "EFFECT"),
+    Command("resize", resize, "EFFECT"),
 
     Command("blink", blink, "EFFECT"),
     Command("colorwipe", color_wipe, "EFFECT"),
@@ -880,6 +950,11 @@ commands = [
     Command("randwarp", randwarp, "EFFECT"),
     Command("randpbody", randpbody, "EFFECT"),
     Command("randselect", randselect, "EFFECT"),
+    
+    Command("share", share, "EFFECT"),
+    Command("debugclone", debugclone, "EFFECT"),
+    Command("parent", parent, "EFFECT"),
+    Command("child", child, "EFFECT"),
 
     Command("brightness", brightness, n_args=1),
     Command("pause", pause),

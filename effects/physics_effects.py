@@ -124,10 +124,8 @@ class ParticleEffect(PhysicsEffect):
         self.colors = [(0,0,0)]
         self.N = len(self.colors) - 1
         
-        self.init_behaviors = behaviors
-        self.behaviors = []
-        for behavior in self.init_behaviors:
-            self.behaviors.append(behavior.clone())
+        self.init_behaviors = behaviors.copy()
+        self.behaviors = behaviors
         self.new_behaviors = []
         
         self.brightness = 1
@@ -163,10 +161,12 @@ class ParticleEffect(PhysicsEffect):
         self.new_behaviors.append(behavior)
 
     def clone(self):
-        # behaviors = []
-        # for behavior in self.init_behaviors:
-        #     behaviors.append(behavior.clone())
-        return ParticleEffect(self.effect.clone(), self.body.clone(), self.radius, self.init_behaviors, self.collidable)
+        effect = self.effect.clone()
+        body = self.body.clone()
+        behaviors = []
+        for behavior in self.init_behaviors:
+            behaviors.append(behavior.clone())
+        return ParticleEffect(effect, body, self.radius, behaviors, self.collidable)
     
 
 class EmitterBehavior(ParticleBehavior):
@@ -204,7 +204,7 @@ class ExplosionBehavior(ParticleBehavior):
         
     def tick(self, engine, particle, time_delta):
         self.time_sum += time_delta
-        if self.fuse == 0 or self.time_sum / self.fuse > self.explosions:
+        if self.fuse == 0 or (self.time_sum / self.fuse - 1) > self.explosions:
             self.explode(engine, particle)
             self.explosions += 1
         

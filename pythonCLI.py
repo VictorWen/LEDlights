@@ -114,6 +114,8 @@ class StackCLI:
                 self.state.send(traceback.format_exc())
             else:
                 self.state.send(e)
+            self.queue = []
+            self.queueing = False
 
     async def parse_queue(self):
         while not self.queueing and len(self.queue) > 0:
@@ -243,6 +245,7 @@ class ParseNode:
 class CommandParser:
     def __init__(self, keywords, commands, state, fun_vars=[]):
         self.keywords = keywords
+        self.init_commands = commands.copy()
         self.commands = commands
         self.state = state
         self.variables = state.vars
@@ -352,7 +355,7 @@ class CommandParser:
     def _check_is_valid_var_name(self, token):
         if not token.isalpha() or len(token) < 1:
             raise Exception(f"Invalid variable name: {token}")
-        if token in self.keywords or token in self.commands or token in BOOLEAN_TOKENS:
+        if token in self.keywords or token in self.init_commands or token in BOOLEAN_TOKENS:
             raise Exception(
                 f"Invalid variable name: {token} is already a reserved value")
             
@@ -508,9 +511,10 @@ class CommandEvaluator():
             raise Exception(f"Unknown variable {var_node.value}")
         var = self.state.vars[var_node.value]
         if var.is_command:
-            value = var.value.clone()
+            # value = var.value.clone()
+            value = var.value
             self.state.last_command_result = value
-            return value
+            # return value
         return var.value
 
     async def eval_keyword(self, keyword_name, args):
@@ -612,11 +616,11 @@ class NoKeywordCommandEvaluator:
             raise Exception(f"Unknown variable {var_node.value}")
         var = self.state.vars[var_node.value]
         if var.is_command:
-            value = var.value.clone()
+            # value = var.value.clone()
+            value = var.value
             self.state.last_command_result = value
-            return value
-        else:
-            return var.value
+            # return value
+        return var.value
 
     def eval_command(self, command_name, args):
         command = self.commands[command_name]
