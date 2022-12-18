@@ -1,18 +1,17 @@
 import discord
 import asyncio
-from pythonCLI import StackCLI
-from effects.effects import *
-from neopixel_controller import *
+from src.pythonCLI import StackCLI
+from src.effects.effects import *
+from src.neopixel_controller import *
 import asyncio
 import board
 import neopixel
-from stack_commands import commands, State
+from src.stack_commands import commands, State
 from decouple import config
 
 CLIENT_KEY = config('CLIENT_KEY')
 AUTH_USERS = config('AUTH_USERS')
 AUTH_USERS = AUTH_USERS.strip().split()
-print(AUTH_USERS)
 
 class DiscordCLI:
     def __init__(self, commands: list, state, client):

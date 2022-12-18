@@ -1,14 +1,13 @@
-from effects.effects import *
-from neopixel_controller import *
+from src.effects.effects import *
+from src.neopixel_controller import *
 import asyncio
 import board
 import neopixel
-from pythonCLI import *
-from stack_commands import commands, State
-from colors import *
+from src.pythonCLI import *
+from src.stack_commands import commands, State
+from src.colors import *
 import sys
-from effects.music_effects import PyAudioPlayer
-
+from src.effects.music_effects import PyAudioPlayer
 
 async def main():
     n = 150
