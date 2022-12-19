@@ -14,7 +14,7 @@ class PhysicsEngine(BaseEffect):
         self.tick_effects(colors, time_delta)
 
         for i in range(N):
-            pixels[i] = (0, 0, 0)
+            pixels[i] = (0, 0, 0, 0)
         for effect in self.effects:
             left = math.floor(effect.body.position - effect.bounds)
             right = math.ceil(effect.body.position + effect.bounds)
@@ -101,7 +101,7 @@ class PhysicsEffect(BaseEffect):
                 other_effect.notify_collisions.add(self)
         
     def get_pixel(self, index):
-        return (0, 0, 0)
+        return (0, 0, 0, 0)
 
     def clone(self):
         tags = [tag.clone() for tag in self.tags]
@@ -114,7 +114,7 @@ class ParticleEffect(PhysicsEffect):
         self.effect = effect
         self.radius = radius
         
-        self.colors = [(0,0,0)]
+        self.colors = [(0,0,0,0)]
         self.N = len(self.colors) - 1
         
         self.init_behaviors = behaviors.copy()
@@ -140,14 +140,14 @@ class ParticleEffect(PhysicsEffect):
     
     def gaussian_blur(self, dx):
         if self.radius <= 0 or abs(dx) >= 3 * self.radius:
-            return (0, 0, 0)
+            return (0, 0, 0, 0)
         x2 = dx * dx
         s2 = self.radius * self.radius
         G = math.exp(- x2 / (2 * s2))
         
         val = G * self.N
         if val < 1:
-            return (0, 0, 0)
+            return (0, 0, 0, 0)
         return scalar_mult(self.brightness, self.colors[self.N - int(val)])
 
     def add_behavior(self, behavior):

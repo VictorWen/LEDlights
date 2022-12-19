@@ -1,4 +1,4 @@
-let FireworkColor = (parent (gradient (resize (randselect (rainbow) 1) 100) BLACK))
+let FireworkColor = (parent (gradient (resize (randselect (rainbow) 1) 100) CLEAR))
 # let FireworkColor = (debugclone "FireworkColor" FireworkColor)
 
 let SparkColor = (child FireworkColor)
@@ -14,10 +14,10 @@ let FireworkBehaviors = [(collision [(explosion Spark 25 0) (life 0)] true ["Fus
 let Firework = (particle FireworkColor FireworkPBody 0.35 FireworkBehaviors true ["Firework" counttag])
 
 let FusePBody = (randpbody -10 0 20 35)
-let Fuse = (particle BLACK FusePBody 0 [(collision [(life 0)] true ["Firework" counttag]) (life 10)] true ["Fuse" counttag])
+let Fuse = (particle CLEAR FusePBody 0 [(collision [(life 0)] true ["Firework" counttag]) (life 10)] true ["Fuse" counttag])
 
-fun FireworkEmitter density = (particle BLACK (pbody 0) 0 [(emitter Firework density)])
-fun FuseEmitter density = (particle BLACK (pbody -40) 0 [(emitter Fuse density)])
+fun FireworkEmitter density = (particle CLEAR (pbody 0) 0 [(emitter Firework density)])
+fun FuseEmitter density = (particle CLEAR (pbody -40) 0 [(emitter Fuse density)])
 
 fun fireworks density = physics [(FireworkEmitter density) (FuseEmitter density)]
 (fireworks 0.3)

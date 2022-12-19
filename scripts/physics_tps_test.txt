@@ -1,0 +1,4 @@
+let greenParticle = (particle (gradient GREEN BLACK) (pbody 0 15 -5) 0.35 [(decay 3.75) (life 30)])
+let redParticle = (particle (gradient RED BLACK) (pbody 75) 0.5 [(decay 3.75) (life 30) (emitter greenParticle 2)])
+
+physics [redParticle]

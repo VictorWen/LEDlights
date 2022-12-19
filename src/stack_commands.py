@@ -17,21 +17,25 @@ from .config import config
 
 
 def hexstring_to_rgb(hex):
+    N = len(hex)
+    if N != 6 and N != 8:
+        return None
     hex = hex.strip('#')
     try:
-        return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
-    except:
+        return tuple(int(hex[i:i+2], 16) for i in range(0, N, 2))
+    except Exception:
         return None
 
 
-def parse_rgb_color(r, g, b):
+def parse_rgb_color(r, g, b, a=None):
     try:
         r = int(r)
         g = int(g)
         b = int(b)
-        if (-1 <= r <= 255 and -1 <= g <= 255 and -1 <= b <= 255):
-            return (r, g, b)
-    except:
+        a = int(a) if a is not None else 1
+        if (-1 <= r <= 255 and -1 <= g <= 255 and -1 <= b <= 255 and 0 <= a <= 1):
+            return (r, g, b, a)
+    except Exception:
         return None
 
 
@@ -40,7 +44,7 @@ def parse_nonzero_float(num):
         num = float(num)
         if num != 0:
             return num
-    except:
+    except Exception:
         return None
 
 
@@ -49,7 +53,7 @@ def parse_nonzero_int(num):
         num = int(num)
         if num != 0:
             return num
-    except:
+    except Exception:
         return None
 
 
@@ -57,14 +61,14 @@ def parse_float(num):
     try:
         num = float(num)
         return num
-    except:
+    except Exception:
         return None
     
 def parse_int(num):
     try:
         num = int(num)
         return num
-    except:
+    except Exception:
         return None
 
 
@@ -110,7 +114,7 @@ def gradient(state, nargs, args):
         for w in args[-1]:
             try:
                 weights.append(int(w))
-            except:
+            except Exception:
                 raise Exception(f"Invalid integer WEIGHT {w}")
         if len(weights) != len(color_effects):
             raise Exception(
@@ -170,6 +174,21 @@ def resize(state, nargs, args):
         raise Exception(f'Error: {args[2]} is not a valid SIZE')
 
     state.last_command_result = ResizeEffect(effect, size)
+    
+    
+def alpha(state, nargs, args):
+    if nargs != 3:
+        raise Exception(f"Format: {args[0]} EFFECT ALPHA")
+
+    effect = args[1]
+    if not isinstance(effect, BaseEffect):
+        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
+
+    alpha = parse_float(args[2])
+    if alpha is None or alpha < 0 or alpha > 1:
+        raise Exception(f'Error: {args[2]} is not a valid ALPHA. ALPHA should be a float between 0 and 1')
+
+    state.last_command_result = AlphaAdapter(effect, alpha)
 
 
 def rainbow(state, nargs, args):
@@ -178,12 +197,16 @@ def rainbow(state, nargs, args):
 
 def rgb(state, nargs, args):
     if (nargs < 4):
-        raise Exception(f"Format: {args[0]} R G B")
+        raise Exception(f"Format: {args[0]} R G B <A>")
 
-    rgb = parse_rgb_color(args[1], args[2], args[3])
-    if (rgb is None):
+    A = None if nargs < 5 else args[4]
+    rgb = parse_rgb_color(args[1], args[2], args[3], A)
+    if rgb is None and A is None:
         raise Exception(
             f"Error: ({args[1]}, {args[2]}, {args[3]}) is not a valid RGB Color")
+    elif rgb is None:
+        raise Exception(
+            f"Error: ({args[1]}, {args[2]}, {args[3]}, {args[4]}) is not a valid RGBA Color")
 
     state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
@@ -375,7 +398,7 @@ def play_music(state, nargs, args):
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
-        except:
+        except Exception:
             raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = PlayMusic(wavfile)
@@ -422,7 +445,7 @@ def spectrum(state, nargs, args):
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
-        except:
+        except Exception:
             raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(effect, wavfile, state.playback)
@@ -469,7 +492,7 @@ def piano(state, nargs, args):
     else:
         try:
             wavfile = wav.open(f"{config('music path', default='.')}/{file}", 'rb')
-        except:
+        except Exception:
             raise Exception(f"Error: {file} is not a valid FILENAME")
 
     state.last_command_result = SpectrumEffect(
@@ -858,7 +881,7 @@ def brightness(state, nargs, args):
     if (nargs == 2):
         try:
             brightness = float(args[1])
-        except:
+        except Exception:
             raise Exception("Invalid brightness")
 
         if (brightness < 0 or brightness > 1):
@@ -924,7 +947,7 @@ def set_layer(state, nargs, args):
     index = 0
     try:
         index = int(args[1])
-    except:
+    except Exception:
         raise Exception(f"Error: {args[1]} is not a valid INDEX")
 
     state.controller.set_layer(index)
@@ -967,6 +990,7 @@ commands = [
     Command("rainbow", rainbow, "EFFECT"),
     Command("rgb", rgb, "EFFECT"),
     Command("hex", hex, "EFFECT"),
+    Command("alpha", alpha, "EFFECT"),
 
     Command("crop", crop, "EFFECT"),
     Command("resize", resize, "EFFECT"),

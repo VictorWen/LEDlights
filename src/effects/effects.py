@@ -7,8 +7,8 @@ STATIC = 'static'
 DYNAMIC = 'dynamic'
 
 
-def gradient(color1, color2, value):
-    return tuple(int(color1[i] + (color2[i] - color1[i]) * value) for i in range(3))
+# def gradient(color1, color2, value):
+#     return tuple(int(color1[i] + (color2[i] - color1[i]) * value) for i in range(3))
 
 
 def rainbow(value):
@@ -68,6 +68,28 @@ class ColorAdapter(BaseEffect):
 
     def clone(self):
         return ColorAdapter(self.color)
+    
+
+class AlphaAdapter(BaseEffect):
+    def __init__(self, effect, alpha):
+        super().__init__(effect.type)
+        self.effect = effect
+        self.alpha = alpha
+        
+    def tick(self, pixels, time_delta):
+        self.effect.tick(pixels, time_delta)
+        for i in range(len(pixels)):
+            color = pixels[i]
+            a = 1 if len(color) < 4 else color[3]
+            pixels[i] = (
+                int(color[0] / a * self.alpha), 
+                int(color[1] / a * self.alpha), 
+                int(color[2] / a * self.alpha), 
+                self.alpha
+            )
+            
+    def clone(self):
+        return AlphaAdapter(self.effect.clone(), self.alpha)
 
 
 class DynamicSplit(BaseEffect):
@@ -126,8 +148,7 @@ class DynamicGradient(BaseEffect):
             for j in range(weight):
                 pixel = color[int(j/weight * N)]
                 if len(colors) > 0:
-                    differences.append(
-                        tuple(int(pixel[j] - colors[-1][j]) for j in range(3)))
+                    differences.append(self._difference(pixel, colors[-1]))
                 colors.append(pixel)
 
         n = len(colors)
@@ -140,11 +161,27 @@ class DynamicGradient(BaseEffect):
                 pixels[i] = colors[0]
             else:
                 value *= (n - 1)
-                j = n - 1
-                while value <= j:
-                    j -= 1
-                pixels[i] = tuple(
-                    int(colors[j][k] + (value - j) * differences[j][k]) for k in range(3))
+                j = math.ceil(value) - 1
+                pixels[i] = self._get_gradient(colors[j], differences[j], (value - j))
+    
+    def _difference(self, color1, color2):
+        alpha1 = 1 if len(color1) < 4 else color1[3]
+        alpha2 = 1 if len(color2) < 4 else color2[3]
+        return (
+            int(color1[0] - color2[0]),
+            int(color1[1] - color2[1]),
+            int(color1[2] - color2[2]),
+            alpha1 - alpha2
+        )
+        
+    def _get_gradient(self, color, diff, value):
+        alpha = 1 if len(color) < 4 else color[3]
+        return (
+            int(color[0] + value * diff[0]),
+            int(color[1] + value * diff[1]),
+            int(color[2] + value * diff[2]),
+            alpha + value * diff[3]
+        )
 
     def clone(self):
         effects = []

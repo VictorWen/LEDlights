@@ -154,7 +154,7 @@ class StackCLI:
 
         try:
             time = float(args[1])
-        except:
+        except Exception:
             raise Exception(f"Error: {args[1]} is not a valid TIME")
 
         await asyncio.sleep(time)
@@ -169,7 +169,7 @@ class StackCLI:
                 old_queue = self.queue
                 self.queue = file.readlines()
                 self.queue.extend(old_queue)
-        except:
+        except Exception:
             self.state.send(os.getcwd())
             raise Exception("Invalid file")
 
