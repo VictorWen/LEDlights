@@ -1,0 +1,8 @@
+let Floor = (particle WHITE (pbody 0) 0.2 [] true ["Floor"])
+
+fun ball effect = (particle (gradient (resize effect 100) CLEAR) (randpbody 1 1 50 60 -10 -10 0 0.05) 0.5 [(rigid ["Floor"] 0.95) (life 120)] true)
+fun ballGenerator effect = (particle CLEAR (pbody 0) 0 [(explosion (ball effect) 25 120)])
+fun ballGeneratorStart effect = (particle CLEAR (pbody 0) 0 [(explosion (ball effect) 25 0) (life 0)])
+
+fun balls effect = physics [Floor (ballGenerator effect) (ballGeneratorStart effect)]
+balls RED

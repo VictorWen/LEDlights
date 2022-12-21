@@ -95,11 +95,12 @@ class RandSelector(BaseEffect):
 
 
 class RandPBody(PhysicsBody):
-    def __init__(self, min_pos, max_pos, min_vel=0, max_vel=0, min_acc=0, max_acc=0, rerolls=-1):
+    def __init__(self, min_pos, max_pos, min_vel=0, max_vel=0, min_acc=0, max_acc=0, min_mass=1, max_mass=1, rerolls=-1):
         super().__init__(
             random.random() * (max_pos - min_pos) + min_pos,
             random.random() * (max_vel - min_vel) + min_vel,
-            random.random() * (max_acc - min_acc) + min_acc
+            random.random() * (max_acc - min_acc) + min_acc,
+            random.random() * (max_mass - min_mass) + min_mass
         )
         self.min_pos = min_pos
         self.max_pos = max_pos
@@ -107,6 +108,8 @@ class RandPBody(PhysicsBody):
         self.max_vel = max_vel
         self.min_acc = min_acc
         self.max_acc = max_acc
+        self.min_mass = min_mass
+        self.max_mass = max_mass
         self.rerolls = rerolls
     
     def clone(self):
@@ -118,8 +121,10 @@ class RandPBody(PhysicsBody):
                 self.max_vel,
                 self.min_acc,
                 self.max_acc,
+                self.min_mass,
+                self.max_mass,
                 self.rerolls - 1
             )
         else:
-            return PhysicsBody(self.position, self.velocity, self.acceleration)
+            return PhysicsBody(self.position, self.velocity, self.acceleration, self.mass)
         

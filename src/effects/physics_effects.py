@@ -45,22 +45,58 @@ class PhysicsEngine(BaseEffect):
         for effect in self.effects:
             effects.append(effect.clone())
         return PhysicsEngine(effects)
+    
+
+class CollisionEvent:
+    def __init__(self, particleA, particleB, collision_time):
+        self.particle = particleA
+        self.other = particleB
+        self.collision_time = collision_time
+        self._calculate_collision_bodies()
+        
+    def _calculate_collision_bodies(self):
+        bodyA = self.particle.body
+        bodyB = self.other.body
+        
+        t = self.collision_time
+        
+        pos1 = bodyA.prev_pos
+        vel1 = bodyA.prev_vel
+        acc1 = bodyA.acceleration
+        
+        pos2 = bodyB.prev_pos
+        vel2 = bodyB.prev_vel
+        acc2 = bodyB.acceleration
+            
+        pos = pos1 + (vel1 + acc1 * t / 2) * t 
+            
+        u1 = vel1 + acc1 * t
+        u2 = vel2 + acc2 * t
+        
+        self.bodyA = PhysicsBody(pos, u1, acc1, bodyA.mass)
+        self.bodyB = PhysicsBody(pos, u2, acc2, bodyB.mass)
 
 
-class PhysicsBody():
-    def __init__(self, pos, vel, acc):
+class PhysicsBody:
+    def __init__(self, pos, vel, acc, mass=1):
         self.position = pos
         self.velocity = vel
         self.acceleration = acc
         self.prev_pos = pos
+        self.prev_vel = vel
+        self.mass = mass
+        
+    def __repr__(self):
+        return f"(pbody {self.position} {self.velocity} {self.acceleration} {self.mass})"
 
     def tick(self, time_delta):
         self.prev_pos = self.position
+        self.prev_vel = self.velocity
         self.position += (self.velocity + self.acceleration * time_delta  / 2) * time_delta
         self.velocity += self.acceleration * time_delta
         
     def clone(self):
-        return PhysicsBody(self.position, self.velocity, self.acceleration)
+        return PhysicsBody(self.position, self.velocity, self.acceleration, self.mass)
 
 
 class PhysicsEffect(BaseEffect):
@@ -72,8 +108,8 @@ class PhysicsEffect(BaseEffect):
         self.tags = set(tags)
         self.has_collision = False
         self.notify_collision = False
-        self.collisions = set()
-        self.notify_collisions = set()
+        self.collisions = {}
+        self.notify_collisions = {}
         self.bounds = bounds
 
     def tick(self, engine, _, time_delta):
@@ -84,21 +120,50 @@ class PhysicsEffect(BaseEffect):
             self.has_collision = self.notify_collision
             self.collisions = self.notify_collisions
             self.notify_collision = False
-            self.notify_collisions = set()
-            self.detect_collision(engine)
+            self.notify_collisions = {}
+            self.detect_collision(engine, time_delta)
         
-    def detect_collision(self, engine):        
+    def detect_collision(self, engine, time_delta):        
         a = min(self.body.prev_pos, self.body.position)
         b = max(self.body.prev_pos, self.body.position)
         
         for other_effect in engine.effects:
-            if other_effect is self or not other_effect.collidable:
+            if other_effect is self or not other_effect.collidable or id(other_effect) in self.collisions:
                 continue
             if a < other_effect.body.position <= b:
+                collision_time = self.calculate_collision_time(other_effect)
+                if collision_time < 0 or collision_time > time_delta:
+                    continue
+                
                 self.has_collision = True
-                self.collisions.add(other_effect)
+                self.collisions[id(other_effect)] = CollisionEvent(self, other_effect, collision_time)
                 other_effect.notify_collision = True
-                other_effect.notify_collisions.add(self)
+                other_effect.notify_collisions[id(self)] = CollisionEvent(other_effect, self, collision_time)
+                
+    
+    def calculate_collision_time(self, other):
+        delta_pos = other.body.prev_pos - self.body.prev_pos
+        delta_vel = other.body.prev_vel - self.body.prev_vel
+        delta_acc = other.body.acceleration - self.body.acceleration
+        
+        if delta_acc != 0:
+            discrim = delta_vel * delta_vel - 2 * delta_acc * delta_pos
+            if discrim < 0:
+                return -1
+            sqrt_discrim = math.sqrt(discrim)
+            
+            delta_t = (-delta_vel - sqrt_discrim) / delta_acc
+            if delta_t < 0:
+                delta_t = (-delta_vel + sqrt_discrim) / delta_acc
+        elif delta_vel != 0:
+            delta_t = -delta_pos / delta_vel           
+        else:
+            return -1
+        
+        if delta_t < 0:
+            return -1
+        return delta_t
+                
         
     def get_pixel(self, index):
         return (0, 0, 0, 0)
@@ -165,7 +230,7 @@ class ParticleEffect(PhysicsEffect):
 
 class ParticleBehavior():
     def __init__(self):
-        pass
+        self.is_alive = True
     
     def tick(self, engine, particle, time_delta):
         pass
@@ -235,11 +300,11 @@ class CollisionBehavior(ParticleBehavior):
     def tick(self, engine, particle, time_delta):
         if not particle.has_collision or (self.once and self.fired and particle.is_alive):
             return
-        for collider in particle.collisions:
-            if (not self.once or not self.fired) and particle.is_alive and self.tags.issubset(collider.tags):
+        for collider, collision in particle.collisions.item():
+            if (not self.once or not self.fired) and particle.is_alive and self.tags.issubset(collision.other.tags):
                 for behavior in self.behaviors:
                     b = behavior.clone()
-                    b.tick(engine, particle, 0)
+                    b.tick(engine, particle, time_delta)
                     particle.add_behavior(b)
                 self.fired = True
     
@@ -247,6 +312,50 @@ class CollisionBehavior(ParticleBehavior):
         behaviors = [behavior.clone() for behavior in self.behaviors]
         tags = [tag.clone() for tag in self.tags]
         return CollisionBehavior(behaviors, self.once, tags)
+    
+
+class RigidColliderBehavior(ParticleBehavior):
+    def __init__(self, coeff_restitution, tags=[]):
+        super().__init__()
+        self.coeff_res = coeff_restitution
+        self.tags = set(tags)
+        
+    def tick(self, engine, particle, time_delta):
+        if not particle.has_collision:
+            return
+        
+        min_time = None
+        for collider, collision in particle.collisions.items():
+            if self.tags.issubset(collision.other.tags) and (min_time is None or collision.collision_time < min_time.collision_time):
+                min_time = collision
+        self.calculate_post_collision(particle, min_time, time_delta)
+                
+    def calculate_post_collision(self, particle, collision, time_delta):
+        if collision is None:
+            return
+        m1 = collision.bodyA.mass
+        m2 = collision.bodyB.mass
+        mass_sum = m1 + m2
+        if mass_sum <= 0:
+            return
+        
+        remaining_time_delta = time_delta - collision.collision_time
+        
+        pos = collision.bodyA.prev_pos
+        u1 = collision.bodyA.prev_vel
+        u2 = collision.bodyB.prev_vel
+        u_d = u2 - u1
+        p1 = m1 * u1
+        p2 = m2 * u2
+        
+        vel = (self.coeff_res * m2 * u_d + p1 + p2) / mass_sum
+        
+        particle.body.position = pos
+        particle.body.velocity = vel
+        particle.body.tick(remaining_time_delta)
+        
+    def clone(self):
+        return RigidColliderBehavior(self.coeff_res, [tag.clone() for tag in self.tags])
 
 
 class LifetimeBehavior(ParticleBehavior):
@@ -278,6 +387,28 @@ class DecayBehavior(ParticleBehavior):
         return DecayBehavior(self.half_life)
     
     
+class ImpluseBehavior(ParticleBehavior):
+    def __init__(self, constant, momentum_coef):
+        super().__init__()
+        self.constant = constant
+        self.coef = momentum_coef
+        self.fired = False
+    
+    def tick(self, engine, particle, time_delta):
+        if self.fired:
+            return
+        delta_v = 0
+        delta_v += self.constant + self.coef * particle.body.velocity
+        
+        # print(delta_v, delta_v * time_delta, particle.body.position)
+        particle.body.velocity += delta_v
+        particle.body.position += delta_v * time_delta
+        self.fired = True
+        self.is_alive = False
+        
+    def clone(self):
+        return ImpluseBehavior(self.constant, self.coef)
+    
 class Tag:
     def __init__(self, string):
         self.string = string
@@ -300,12 +431,14 @@ class Tag:
 
 class CountingTag(Tag):
     def __init__(self, start=0, prefix=""):
-        super().__init__(f"{prefix}{start}")
+        super().__init__(f"{prefix}-{start}")
         self.start = start
+        self.prefix = prefix
+        self.count = start
         
     def __repr__(self):
         return self.string
         
     def clone(self):
-        self.start += 1
-        return CountingTag(self.start)
+        self.count += 1
+        return CountingTag(self.count, self.prefix)

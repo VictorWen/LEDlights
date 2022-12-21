@@ -500,9 +500,9 @@ def piano(state, nargs, args):
 
 
 def pbody(state, nargs, args):
-    if nargs not in [2, 3, 4]:
+    if nargs not in [2, 3, 4, 5]:
         raise Exception(
-            f"Format: {args[0]} POSITION <VELOCITY> <ACCELERATION>")
+            f"Format: {args[0]} POSITION <VELOCITY> <ACCELERATION> <MASS>")
 
     pos = parse_float(args[1])
     if pos is None:
@@ -519,8 +519,14 @@ def pbody(state, nargs, args):
         acc = parse_float(args[3])
         if acc is None:
             raise Exception(f"Error: {acc} is an invalid ACCELERATION")
+        
+    mass = 1
+    if nargs >= 5:
+        mass = parse_float(args[4])
+        if mass is None:
+            raise Exception(f"Error: {mass} is an invalid ACCELERATION")
 
-    state.last_command_result = PhysicsBody(pos, vel, acc)
+    state.last_command_result = PhysicsBody(pos, vel, acc, mass)
 
 
 def physics(state, nargs, args):
@@ -643,6 +649,31 @@ def collision(state, nargs, args):
                 raise Exception(f"Error: {args[3]} is not a list of tags or strings, {tag} is not a valid tag")
     
     state.last_command_result = CollisionBehavior(behaviors, once, tags)
+    
+    
+def rigid(state, nargs, args):
+    if nargs not in [1, 2, 3]:
+        raise Exception(f"Format: {args[0]} <[TAGS]> <COEFF-RESTITUTION>")
+    
+    tags = []
+    if nargs > 1:
+        tags = args[1]
+        if not isinstance(tags, list):
+            raise Exception(f"Error: {args[1]} is not a list of tags or strings")
+        for i in range(len(tags)):
+            tag = tags[i]
+            if isinstance(tag, str):
+                tags[i] = Tag(tag)
+            elif not isinstance(tag, Tag):
+                raise Exception(f"Error: {args[1]} is not a list of tags or strings, {tag} is not a valid tag")
+            
+    coeff = 1
+    if nargs > 2:
+        coeff = parse_float(args[2])
+        if coeff is None:
+            raise Exception(f"Error: {args[2]} is not a valid COEFF-RESITUTION")
+        
+    state.last_command_result = RigidColliderBehavior(coeff, tags)
 
 
 def life(state, nargs, args):
@@ -665,6 +696,23 @@ def decay(state, nargs, args):
         raise Exception(f"Error: {args[1]} is not a valid HALF-LIFE")
     
     state.last_command_result = DecayBehavior(half_life)
+    
+    
+def impulse(state, nargs, args):
+    if nargs not in [2, 3]:
+        raise Exception(f"Format: {args[0]} CONSTANT <MOMENTUM-COEF>")
+    
+    constant = parse_float(args[1])
+    if constant is None:
+        raise Exception(f"Error: {args[1]} is not a valid CONSTANT")
+    
+    self_coef = 0
+    if nargs > 2:
+        self_coef = parse_float(args[2])
+        if self_coef is None:
+            raise Exception(f"Error: {args[2]} is not a valid MOMENTUM-COEF")
+    
+    state.last_command_result = ImpluseBehavior(constant, self_coef)
     
     
 def tag(state, nargs, args):
@@ -782,7 +830,7 @@ def randselect(state, nargs, args):
 
 
 def randpbody(state, nargs ,args):
-    if nargs not in [3, 5, 7, 8]:
+    if nargs not in [3, 5, 7, 9, 10]:
         raise Exception(
             f"Format: {args[0]} MIN_POS MAX_POS <MIN_VEL> <MAX_VEL> <MIN_ACC> <MAX_ACC> <REROLL>")
 
@@ -815,13 +863,24 @@ def randpbody(state, nargs ,args):
         if max_acc is None:
             raise Exception(f"Error: {max_acc} is not a valid number")
         
+    min_mass = 1
+    max_mass = 1
+    if nargs >= 8:
+        min_mass = parse_float(args[7])
+        if min_mass is None:
+            raise Exception(f"Error: {min_mass} is not a valid number")
+    if nargs >= 9:
+        max_mass = parse_float(args[8])
+        if max_mass is None:
+            raise Exception(f"Error: {max_mass} is not a valid number")
+        
     reroll = -1
-    if nargs > 7:
-        reroll = parse_int(args[7])
+    if nargs > 9:
+        reroll = parse_int(args[9])
         if reroll is None:
-            raise Exception(f"Error: {args[7]} is not a valid integer")
+            raise Exception(f"Error: {args[79]} is not a valid integer")
 
-    state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, reroll)
+    state.last_command_result = RandPBody(min_pos, max_pos, min_vel, max_vel, min_acc, max_acc, min_mass, max_mass, reroll)
     
     
 def share(state, nargs, args):
@@ -1016,8 +1075,10 @@ commands = [
     Command("emitter", emitter, "EFFECT"),
     Command("explosion", explosion, "EFFECT"),
     Command("collision", collision, "EFFECT"),
+    Command("rigid", rigid, "EFFECT"),
     Command("life", life, "EFFECT"),
     Command("decay", decay, "EFFECT"),
+    Command("impulse", impulse, "EFFECT"),
     
     Command("tag", tag, "EFFECT"),
     Command("counttag", counttag, "EFFECT"),
