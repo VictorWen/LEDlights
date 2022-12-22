@@ -190,12 +190,22 @@ class ParticleEffect(PhysicsEffect):
         
     def tick(self, engine, colors, time_delta):
         super().tick(engine, colors, time_delta)
-        self.colors = resize_clone(colors, min(len(colors), math.ceil(10 * self.radius + 5)))
-        self.N = len(self.colors) - 1
-        self.effect.tick(self.colors, time_delta)
+        if self.N < 5 or self.effect.type == DYNAMIC:
+            self.colors = resize_clone(colors, min(len(colors), math.ceil(10 * self.radius + 5)))
+            self.N = len(self.colors) - 1
+            self.effect.tick(self.colors, time_delta)
         
-        for behavior in self.behaviors:
+        self.tick_behaviors(engine, time_delta)
+        
+    def tick_behaviors(self, engine, time_delta):
+        i = 0
+        while i < len(self.behaviors):
+            behavior = self.behaviors[i]
             behavior.tick(engine, self, time_delta)
+            if not behavior.is_alive:
+                self.behaviors.pop(i)
+            else: 
+                i += 1
         for new_behavior in self.new_behaviors:
             self.behaviors.append(new_behavior)
         self.new_behaviors = []
@@ -300,13 +310,15 @@ class CollisionBehavior(ParticleBehavior):
     def tick(self, engine, particle, time_delta):
         if not particle.has_collision or (self.once and self.fired and particle.is_alive):
             return
-        for collider, collision in particle.collisions.item():
+        for collider, collision in particle.collisions.items():
             if (not self.once or not self.fired) and particle.is_alive and self.tags.issubset(collision.other.tags):
                 for behavior in self.behaviors:
                     b = behavior.clone()
                     b.tick(engine, particle, time_delta)
                     particle.add_behavior(b)
                 self.fired = True
+        if self.once and self.fired:
+            self.is_alive = False
     
     def clone(self):
         behaviors = [behavior.clone() for behavior in self.behaviors]
@@ -360,6 +372,7 @@ class RigidColliderBehavior(ParticleBehavior):
 
 class LifetimeBehavior(ParticleBehavior):
     def __init__(self, lifetime):
+        super().__init__()
         self.lifetime = lifetime
         self.time_sum = 0
     
@@ -400,7 +413,6 @@ class ImpluseBehavior(ParticleBehavior):
         delta_v = 0
         delta_v += self.constant + self.coef * particle.body.velocity
         
-        # print(delta_v, delta_v * time_delta, particle.body.position)
         particle.body.velocity += delta_v
         particle.body.position += delta_v * time_delta
         self.fired = True
@@ -408,6 +420,7 @@ class ImpluseBehavior(ParticleBehavior):
         
     def clone(self):
         return ImpluseBehavior(self.constant, self.coef)
+    
     
 class Tag:
     def __init__(self, string):

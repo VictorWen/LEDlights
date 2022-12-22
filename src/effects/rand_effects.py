@@ -10,6 +10,7 @@ class RandChoice(BaseEffect):
         self.effects = effects
         self.rerolls = rerolls
         self.effect = random.choice(self.effects)
+        self.type = self.effect.type
         
     def tick(self, pixels, time_delta):
         self.effect.tick(pixels, time_delta)
