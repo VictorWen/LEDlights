@@ -7,6 +7,7 @@ class PhysicsEngine(BaseEffect):
         super().__init__()
         self.effects = set(physics_effects)
         self.new_effects = []
+        self.components = {}
     
     def tick(self, pixels, time_delta):      
         N = len(pixels)
@@ -420,6 +421,66 @@ class ImpluseBehavior(ParticleBehavior):
         
     def clone(self):
         return ImpluseBehavior(self.constant, self.coef)
+    
+    
+class FieldBehavior(ParticleBehavior):
+    def __init__(self, name, constant, degree):
+        super().__init__()
+        self.name = name
+        self.constant = constant
+        self.degree = degree
+        self.position = 0
+        
+    def tick(self, engine, particle, time_delta):
+        if "FIELDS" not in engine.components:
+            engine.components["FIELDS"] = {}
+        if self.name not in engine.components["FIELDS"]:
+            engine.components["FIELDS"][self.name] = set()
+        if self not in engine.components["FIELDS"][self.name]:
+            engine.components["FIELDS"][self.name].add(self)
+        self.position = particle.body.position
+            
+    def get_field_value(self, position):
+        d = self.position - position
+        r = abs(self.position - position)
+        val = d * self.constant / math.pow(r, self.degree + 1)
+        return val
+    
+    def clone(self):
+        return FieldBehavior(self.name, self.constant, self.degree)
+    
+    
+class ForceBehavior(ParticleBehavior):
+    def __init__(self, name, constant, velocity_mult):
+        super().__init__()
+        self.name = name
+        self.constant = constant
+        self.vel_mult = velocity_mult
+    
+    def tick(self, engine, particle, time_delta):
+        if "FIELDS" not in engine.components:
+            return
+        if self.name not in engine.components["FIELDS"]:
+            return
+        force = 0
+        value = self.constant + (self.vel_mult * particle.body.velocity)
+        
+        dead_fields = set()
+        for field in engine.components["FIELDS"][self.name]:
+            if not field.is_alive: 
+                dead_fields.add(field)
+            force += field.get_field_value(particle.body.position)
+        for field in dead_fields:
+            engine.components["FIELDS"][self.name].remove(field)
+        
+        force *= value
+        acc = force / particle.body.mass
+        at = acc * time_delta
+        # particle.body.position += at * time_delta / 2 # requires more calculus to be correct
+        particle.body.velocity += at
+        
+    def clone(self):
+        return ForceBehavior(self.name, self.constant, self.vel_mult)
     
     
 class Tag:

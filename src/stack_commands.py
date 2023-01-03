@@ -17,10 +17,10 @@ from .config import config
 
 
 def hexstring_to_rgb(hex):
+    hex = hex.strip('#')
     N = len(hex)
     if N != 6 and N != 8:
         return None
-    hex = hex.strip('#')
     try:
         return tuple(int(hex[i:i+2], 16) for i in range(0, N, 2))
     except Exception:
@@ -714,6 +714,38 @@ def impulse(state, nargs, args):
     
     state.last_command_result = ImpluseBehavior(constant, self_coef)
     
+def field(state, nargs, args):
+    if nargs != 4:
+        raise Exception(f"Format: {args[0]} NAME CONSTANT DEGREE")
+    
+    name = args[1]
+    
+    constant = parse_float(args[2])
+    if constant is None:
+        raise Exception(f"Error: {args[2]} is not a valid CONSTANT")
+    
+    degree = parse_float(args[3])
+    if degree is None:
+        raise Exception(f"Error: {args[3]} is not a valid DEGREE")
+    
+    state.last_command_result = FieldBehavior(name, constant, degree)
+    
+def force(state, nargs, args):
+    if nargs != 4:
+        raise Exception(f"Format: {args[0]} NAME CONSTANT VELOCITY-MULTIPLIER")
+    
+    name = args[1]
+    
+    constant = parse_float(args[2])
+    if constant is None:
+        raise Exception(f"Error: {args[2]} is not a valid CONSTANT")
+    
+    vel_mult = parse_float(args[3])
+    if vel_mult is None:
+        raise Exception(f"Error: {args[3]} is not a valid VELOCITY-MULTIPLIER, must be a float")
+    
+    state.last_command_result = ForceBehavior(name, constant, vel_mult)
+    
     
 def tag(state, nargs, args):
     if nargs != 2:
@@ -1079,6 +1111,8 @@ commands = [
     Command("life", life, "EFFECT"),
     Command("decay", decay, "EFFECT"),
     Command("impulse", impulse, "EFFECT"),
+    Command("field", field, "EFFECT"),
+    Command("force", force, "EFFECT"),
     
     Command("tag", tag, "EFFECT"),
     Command("counttag", counttag, "EFFECT"),

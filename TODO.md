@@ -24,7 +24,7 @@
   - Merge layers into display for multiple effects on top of each other
 - [X] Light Scripts
   - Use text files with commands to send to the controller
-- [ ] Specify strip size
+- [X] Specify strip size
 - New Effects
   - Music Effects
     - [X] Play Music
@@ -36,7 +36,7 @@
     - [ ] Multiply
     - [ ] Subtract
   - Positioning Effects
-    - [ ] Cut
+    - [X] Cut
       - Select only a piece of the colors to display
     - [X] Offset
       - Move the colors to a position in the strip
@@ -54,10 +54,10 @@
         - BURGANDY 90 0 70
         - BLONDE 120 120 30
     - [ ] Invert Effect
-    - [ ] Brighten Effect
+    - [X] Brighten Effect
     - [ ] Contrast Effect
   - Animation Effects
-    - [ ] Particle Collider
+    - [X] Particle Collider
 <!-- - Controller System Calls
   - [ ] Change Effect
   - [ ] Get layer's colors -->
