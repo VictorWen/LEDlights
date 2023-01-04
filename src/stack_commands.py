@@ -14,6 +14,7 @@ import pafy
 import ffmpeg
 import requests
 from .config import config
+from .command_builder import *
 
 
 def hexstring_to_rgb(hex):
@@ -1080,7 +1081,9 @@ commands = [
     Command("split", split, "EFFECT"),
     Command("rainbow", rainbow, "EFFECT"),
     Command("rgb", rgb, "EFFECT"),
-    Command("hex", hex, "EFFECT"),
+    CommandBuilder("hex", lambda x: ColorAdapter(SingleColorSelector(x)), arguments=[
+        CommandArgument("HEX", "HEX-STRING", hexstring_converter, "hexstring of the form #RRGGBB[AA] denoting a color")    
+    ]).set_description("Create a color using a hexadecimal string"),
     Command("alpha", alpha, "EFFECT"),
 
     Command("crop", crop, "EFFECT"),

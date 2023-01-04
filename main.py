@@ -19,7 +19,7 @@ async def main():
     state = State(pixel_control, pixels)
     state.playback = PyAudioPlayer()
 
-    cli = StackCLI(commands, state, debug=True)
+    cli = StackCLI(commands, state, debug=False)
 
     task = asyncio.create_task(pixel_control.run())
     pixel_control.set_effect(SlidingEffect(ColorWipe(ColorAdapter(RainbowColorSelector()), 10), 10))
