@@ -68,6 +68,7 @@ class StackCLI:
         self.parser = CommandParser([
             "read",
             "wait",
+            "help",
             "do",
             "exit"
         ], self.commands, self.state)
@@ -139,6 +140,8 @@ class StackCLI:
                 await self.process_wait(args, nargs)
             elif (name == "read"):
                 self.process_read(args, nargs)
+            elif (name == "help"):
+                self.process_help(args, nargs)
             elif (name == "do"):
                 self.queueing = True
             elif (name == "exit"):
@@ -172,6 +175,20 @@ class StackCLI:
         except Exception:
             self.state.send(os.getcwd())
             raise Exception("Invalid file")
+        
+    def process_help(self, args, nargs):
+        output = " ===HELP=== \n"
+        if nargs == 1:
+            for _, cmd in self.commands.items():
+                output += f"{cmd.get_format()}\n"
+        else:
+            cmd = str(args[1])
+            if cmd not in self.commands:
+                raise Exception(f"help: {cmd} is not a valid command name")
+            cmd = self.commands[cmd]
+            output += f"{cmd.get_help_text()}"
+        self.state.send(output)
+            
 
 
 def tokenize(input_str):

@@ -8,19 +8,24 @@ class ControlState:
     last_command_result = None
 
 
-class Command:
-    description: str = "No Description"
-    
-    def __init__(self, name, call, cmd_type="CONTROL", n_args=0):
+class Command:    
+    def __init__(self, name, call, cmd_type="CONTROL", n_args=0, description="No Description"):
         self.name = name
         assert (cmd_type == "CONTROL" or cmd_type == "EFFECT")
         self.call = call
         self.cmd_type = cmd_type
         self.n_args = n_args
+        self.description = description
         
     def set_description(self, descr):
         self.description = descr
         return self
+    
+    def get_format(self):
+        return f"{self.name} {self.description}"
+    
+    def get_help_text(self):
+        return f"{self.name} {self.description}"
 
     def run(self, state: ControlState, n_args, args):
         self.call(state, n_args, args)
@@ -72,6 +77,15 @@ class CommandBuilder(Command):
         self.arguments = arguments if arguments is not None else []
         
     def __repr__(self) -> str:
+        return self.get_help_text()
+            
+    def get_format(self, name=None):
+        output = f"{self.name if name is None else name} "
+        for arg in self.arguments:
+            output += f"{arg.get_name()} "
+        return output
+    
+    def get_help_text(self):
         output = self.get_format()
         if self.description is not None:
             output += "\n\n"
@@ -79,12 +93,6 @@ class CommandBuilder(Command):
         output += "\n\n"
         for arg in self.arguments:
             output += f"{arg}\n"
-        return output
-            
-    def get_format(self, name=None):
-        output = f"{self.name if name is None else name} "
-        for arg in self.arguments:
-            output += f"{arg.get_name()} "
         return output
         
     def set_description(self, descr):
