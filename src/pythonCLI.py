@@ -499,13 +499,16 @@ class CommandEvaluator():
             children = object_node.children[1:]
             primary.children += children
             return await self.eval_object(primary)
+        elif obj_type == KEYWORD_NODE:
+            eval_args = [obj_value]
+            for child in object_node.children[1:]:
+                eval_args.append(child.value)
+            return await self.eval_keyword(obj_value, eval_args)
         else:
             eval_args = [obj_value]
             for child in object_node.children[1:]:
                 eval_args.append(await self.evaluate(child))
 
-            if obj_type == KEYWORD_NODE:
-                return await self.eval_keyword(obj_value, eval_args)
             if obj_type == COMMAND_NODE:
                 return self.eval_command(obj_value, eval_args)
 

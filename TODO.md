@@ -62,7 +62,7 @@
   - [ ] Change Effect
   - [ ] Get layer's colors -->
 - [ ] Cleanly exit wait
-- [ ] Help command
+- [X] Help command
   - "help" lists all commands
   - "help [CMD]" gets the help information of CMD command
     - Requires refactor of stack command object
