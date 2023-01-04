@@ -17,29 +17,6 @@ from .config import config
 from .command_builder import *
 
 
-def hexstring_to_rgb(hex):
-    hex = hex.strip('#')
-    N = len(hex)
-    if N != 6 and N != 8:
-        return None
-    try:
-        return tuple(int(hex[i:i+2], 16) for i in range(0, N, 2))
-    except Exception:
-        return None
-
-
-def parse_rgb_color(r, g, b, a=None):
-    try:
-        r = int(r)
-        g = int(g)
-        b = int(b)
-        a = int(a) if a is not None else 1
-        if (-1 <= r <= 255 and -1 <= g <= 255 and -1 <= b <= 255 and 0 <= a <= 1):
-            return (r, g, b, a)
-    except Exception:
-        return None
-
-
 def parse_nonzero_float(num):
     try:
         num = float(num)
@@ -65,6 +42,7 @@ def parse_float(num):
     except Exception:
         return None
     
+    
 def parse_int(num):
     try:
         num = int(num)
@@ -73,7 +51,11 @@ def parse_int(num):
         return None
 
 
-class State:
+def effect_arg(descr):
+    return CommandArgument("EFFECT", "EFFECT", ObjectConverter(BaseEffect), descr)
+
+
+class State(ControlState):
     def __init__(self, controller, pixels, send=print):
         self.controller = controller
         self.pixels = pixels
@@ -83,16 +65,23 @@ class State:
         self.playback = None
 
 
-class Command:
-    def __init__(self, name, call, cmd_type="CONTROL", n_args=0):
-        self.name = name
-        assert (cmd_type == "CONTROL" or cmd_type == "EFFECT")
-        self.call = call
-        self.cmd_type = cmd_type
-        self.n_args = n_args
-
-    def run(self, state, n_args, args):
-        self.call(state, n_args, args)
+rgb = CommandBuilder("rgb", lambda r, g, b, a: ColorAdapter(SingleColorSelector((r, g, b, a))), [
+    CommandArgument("RED", "INTEGER(0, 255)", NumberConverter(0, 255, is_int=True), "Red channel value"),
+    CommandArgument("GREEN", "INTEGER(0, 255)", NumberConverter(0, 255, is_int=True), "Green channel value"),
+    CommandArgument("BLUE", "INTEGER(0, 255)", NumberConverter(0, 255, is_int=True), "Blue channel value"),
+    CommandArgument("ALPHA", "NUMBER(0, 1)", NumberConverter(0, 1), "Alpha channel value", False, 1)
+]).set_description("Create a color using RGBA values")
+    
+    
+hex = CommandBuilder("hex", lambda x: ColorAdapter(SingleColorSelector(x)), arguments=[
+    CommandArgument("HEX", "HEX-STRING", convert_hexstring, "Hexstring of the form #RRGGBB[AA] denoting a color")    
+]).set_description("Create a color using a hexadecimal string")
+    
+    
+alpha = CommandBuilder("alpha", AlphaAdapter, [
+    CommandArgument("EFFECT", "EFFECT", ObjectConverter(BaseEffect), "Effect to change alpha value"),
+    CommandArgument("ALPHA", "NUMBER(0, 1)", NumberConverter(0, 1), "Alpha channel value")
+]).set_description("Change the alpha value of an effect")
 
 
 def gradient(state, nargs, args):
@@ -141,86 +130,21 @@ def split(state, nargs, args):
     state.last_command_result = DynamicSplit(color_effects)
 
 
-def crop(state, nargs, args):
-    if nargs < 3 or nargs > 4:
-        raise Exception(f"Format: {args[0]} EFFECT SIZE OFFSET")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    size = parse_nonzero_int(args[2])
-    if size is None:
-        raise Exception(f'Error: {args[2]} is not a valid SIZE')
-
-    offset = 0
-    if nargs == 4:
-        offset = parse_nonzero_int(args[3])
-        if offset is None:
-            raise Exception(f'Error: {args[3]} is not a valid OFFSET')
-
-    state.last_command_result = CropEffect(effect, size, offset)
+crop = CommandBuilder("crop", CropEffect, [
+    effect_arg("Effect to crop"),
+    CommandArgument("SIZE", "INTEGER>0", NumberConverter(1, is_int=True), "New size of the effect"),
+    CommandArgument("OFFSET", "INTEGER>0", NumberConverter(1, is_int=True), "Offset to begin crop")
+]).set_description("Crop an effect to the given size")
 
 
-def resize(state, nargs, args):
-    if nargs != 3:
-        raise Exception(f"Format: {args[0]} EFFECT SIZE")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    size = parse_nonzero_int(args[2])
-    if size is None:
-        raise Exception(f'Error: {args[2]} is not a valid SIZE')
-
-    state.last_command_result = ResizeEffect(effect, size)
-    
-    
-def alpha(state, nargs, args):
-    if nargs != 3:
-        raise Exception(f"Format: {args[0]} EFFECT ALPHA")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    alpha = parse_float(args[2])
-    if alpha is None or alpha < 0 or alpha > 1:
-        raise Exception(f'Error: {args[2]} is not a valid ALPHA. ALPHA should be a float between 0 and 1')
-
-    state.last_command_result = AlphaAdapter(effect, alpha)
+resize = CommandBuilder("resize", ResizeEffect, [
+    effect_arg("Effect to resize"),
+    CommandArgument("SIZE", "INTEGER>0", NumberConverter(1, is_int=True), "New size of the effect")
+]).set_description("Resize an effect to the given size")
 
 
 def rainbow(state, nargs, args):
     state.last_command_result = ColorAdapter(RainbowColorSelector())
-
-
-def rgb(state, nargs, args):
-    if (nargs < 4):
-        raise Exception(f"Format: {args[0]} R G B <A>")
-
-    A = None if nargs < 5 else args[4]
-    rgb = parse_rgb_color(args[1], args[2], args[3], A)
-    if rgb is None and A is None:
-        raise Exception(
-            f"Error: ({args[1]}, {args[2]}, {args[3]}) is not a valid RGB Color")
-    elif rgb is None:
-        raise Exception(
-            f"Error: ({args[1]}, {args[2]}, {args[3]}, {args[4]}) is not a valid RGBA Color")
-
-    state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
-
-
-def hex(state, nargs, args):
-    if (nargs < 2):
-        raise Exception(f"Format: {args[0]} HEX")
-
-    rgb = hexstring_to_rgb(args[1])
-    if (rgb is None):
-        raise Exception(f"Error: {args[1]} is not a valid hex color")
-
-    state.last_command_result = ColorAdapter(SingleColorSelector(rgb))
 
 
 def blink(state, nargs, args):
@@ -1080,14 +1004,13 @@ commands = [
     Command("gradient", gradient, "EFFECT"),
     Command("split", split, "EFFECT"),
     Command("rainbow", rainbow, "EFFECT"),
-    Command("rgb", rgb, "EFFECT"),
-    CommandBuilder("hex", lambda x: ColorAdapter(SingleColorSelector(x)), arguments=[
-        CommandArgument("HEX", "HEX-STRING", hexstring_converter, "hexstring of the form #RRGGBB[AA] denoting a color")    
-    ]).set_description("Create a color using a hexadecimal string"),
-    Command("alpha", alpha, "EFFECT"),
 
-    Command("crop", crop, "EFFECT"),
-    Command("resize", resize, "EFFECT"),
+    rgb,
+    hex,
+    alpha,
+
+    crop,
+    resize,
 
     Command("blink", blink, "EFFECT"),
     Command("colorwipe", color_wipe, "EFFECT"),
