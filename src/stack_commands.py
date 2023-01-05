@@ -143,147 +143,60 @@ resize = CommandBuilder("resize", ResizeEffect, [
 ]).set_description("Resize an effect to the given size")
 
 
-def rainbow(state, nargs, args):
-    state.last_command_result = ColorAdapter(RainbowColorSelector())
+rainbow = CommandBuilder("rainbow", lambda: ColorAdapter(RainbowColorSelector())).set_description(
+    "Display a rainbow"
+)
 
 
-def blink(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = BlinkEffect(effect, time)
+blink = CommandBuilder("blink", BlinkEffect, [
+    effect_arg("Effect to blink"),
+    CommandArgument("TIME", "NUMBER!=0", NumberConverter(exclude=[0]), "The time between blinks")
+]).set_description("Blink an effect on and off")
 
 
-def color_wipe(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = ColorWipe(effect, time)
+color_wipe = CommandBuilder("colorwipe", ColorWipe, [
+    effect_arg("Effect to wipe"),
+    CommandArgument("TIME", "NUMBER!=0", NumberConverter(exclude=[0]), "The time to complete the wipe")
+]).set_description("Wipe an effect around the light strip")
 
 
-def fade_in(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
+fade_in = CommandBuilder("fadein", FadeIn, [
+    effect_arg("Effect to fade in"),
+    CommandArgument("TIME", "NUMBER>0", NumberConverter(min=0, exclude=[0]), "The time to fade in")
+]).set_description("Fade an effect in")
 
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
+fade_out = CommandBuilder("fadeout", FadeOut, [
+    effect_arg("Effect to fade out"),
+    CommandArgument("TIME", "NUMBER>0", NumberConverter(min=0, exclude=[0]), "The time to fade out")
+]).set_description("Fade an effect out")
 
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = FadeIn(effect, time)
-
-
-def fade_out(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = FadeOut(effect, time)
+blink_fade = CommandBuilder("blinkfade", BlinkFade, [
+    effect_arg("Effect to blink fade"),
+    CommandArgument("TIME", "NUMBER!=0", NumberConverter(exclude=[0]), "The time between blinks")
+]).set_description("Fade an effect in and out")
 
 
-def blink_fade(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
+slide = CommandBuilder("slide", SlidingEffect, [
+    effect_arg("Effect to slide"),
+    CommandArgument("TIME", "NUMBER!=0", NumberConverter(exclude=[0]), "The time to complete a full slide")
+]).set_description("Slide an effect around the strip over time")
 
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = BlinkFade(effect, time)
+wave = CommandBuilder("wave", WaveEffect, [
+    effect_arg("Effect to wave"),
+    CommandArgument("PERIOD", "NUMBER!=0", NumberConverter(exclude=[0]), "The time between peaks of the wave"),
+    CommandArgument("LENGTH", "INTEGER>0", NumberConverter(min=1, is_int=True), "The wavelength from peak to peak")
+]).set_description("Create a wave of an effect")
 
 
-def wave(state, nargs, args):
-    if (nargs < 4):
-        raise Exception(f"Format: {args[0]} EFFECT PERIOD WAVELENGTH")
+wheel = CommandBuilder("wheel", WheelEffect, [
+    effect_arg("Effect to wheel"),
+    CommandArgument("PERIOD", "NUMBER!=0", NumberConverter(exclude=[0]), "The period of the wheel"),
+]).set_description("Fill strip with a color using a wheel rotating back and forth")
 
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid PERIOD')
-
-    length = parse_nonzero_float(args[3])
-    if (time is None):
-        raise Exception(f'Error: {args[3]} is not a valid WAVELENGTH')
-
-    state.last_command_result = WaveEffect(effect, time, length)
-
-
-def wheel(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = WheelEffect(effect, time)
-
-
-def wipe(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = WipeEffect(effect, time)
-
-
-def slide(state, nargs, args):
-    if (nargs < 3):
-        raise Exception(f"Format: {args[0]} EFFECT TIME")
-
-    effect = args[1]
-    if not isinstance(effect, BaseEffect):
-        raise Exception(f'Error: {args[1]} is not a valid EFFECT')
-
-    time = parse_nonzero_float(args[2])
-    if (time is None):
-        raise Exception(f'Error: {args[2]} is not a valid TIME')
-
-    state.last_command_result = SlidingEffect(effect, time)
+wipe = CommandBuilder("wipe", WipeEffect, [
+    effect_arg("Effect to use"),
+    CommandArgument("TIME", "NUMBER!=0", NumberConverter(exclude=[0]), "The period to complete a full wipe")
+]).set_description("Fill strip with a color changing over time using the given effect")
 
 
 def play_music(state, nargs, args):
@@ -1003,7 +916,7 @@ def change_merge(state, nargs, args):
 commands = [
     Command("gradient", gradient, "EFFECT"),
     Command("split", split, "EFFECT"),
-    Command("rainbow", rainbow, "EFFECT"),
+    rainbow,
 
     rgb,
     hex,
@@ -1012,15 +925,15 @@ commands = [
     crop,
     resize,
 
-    Command("blink", blink, "EFFECT"),
-    Command("colorwipe", color_wipe, "EFFECT"),
-    Command("fadein", fade_in, "EFFECT"),
-    Command("fadeout", fade_out, "EFFECT"),
-    Command("blinkfade", blink_fade, "EFFECT"),
-    Command("wave", wave, "EFFECT"),
-    Command("wheel", wheel, "EFFECT"),
-    Command("wipe", wipe, "EFFECT"),
-    Command("slide", slide, "EFFECT"),
+    blink,
+    color_wipe,
+    fade_in,
+    fade_out,
+    blink_fade,
+    wave,
+    wheel,
+    wipe,
+    slide,
 
     Command("playmusic", play_music, "EFFECT"),
     Command("spectrum", spectrum, "EFFECT"),

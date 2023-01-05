@@ -531,10 +531,8 @@ class CommandEvaluator():
             raise Exception(f"Unknown variable {var_node.value}")
         var = self.state.vars[var_node.value]
         if var.is_command:
-            # value = var.value.clone()
             value = var.value
             self.state.last_command_result = value
-            # return value
         return var.value
 
     async def eval_keyword(self, keyword_name, args):
@@ -636,10 +634,8 @@ class NoKeywordCommandEvaluator:
             raise Exception(f"Unknown variable {var_node.value}")
         var = self.state.vars[var_node.value]
         if var.is_command:
-            # value = var.value.clone()
             value = var.value
             self.state.last_command_result = value
-            # return value
         return var.value
 
     def eval_command(self, command_name, args):
