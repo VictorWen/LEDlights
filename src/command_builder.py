@@ -1,11 +1,5 @@
 from typing import Union, Callable
-
-
-class ControlState:
-    controller = None
-    send = print
-    vars = {}
-    last_command_result = None
+from cli.evaluator import ControlState
 
 
 class Command:    

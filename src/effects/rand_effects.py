@@ -1,5 +1,5 @@
 import math
-from ..color_utils import *
+from .color_utils import *
 from .effects import DYNAMIC, STATIC, BaseEffect, is_all_static
 import random
 from .physics_effects import PhysicsBody

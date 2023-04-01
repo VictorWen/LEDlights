@@ -3,7 +3,7 @@ import pyaudio
 import numpy as np
 from numpy.fft import rfft, rfftfreq
 from scipy.fftpack import next_fast_len
-from ..color_utils import *
+from .color_utils import *
 
 
 def bin_frequencies(ints, freqs, nbins, min_freq, max_freq, linear=True):

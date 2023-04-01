@@ -1,9 +1,8 @@
 import asyncio
 from asyncio.tasks import wait
-from .color_utils import multiply_colors
+from .effects.color_utils import *
 from .effects.effects import STATIC, DYNAMIC, BaseEffect
 import datetime
-from .color_utils import *
 
 
 def merge_layers(layers, merge_behavior="OVERWRITE"):

@@ -1,5 +1,5 @@
 import math
-from ..color_utils import *
+from .color_utils import *
 from .effects import BaseEffect, DYNAMIC
 
 
