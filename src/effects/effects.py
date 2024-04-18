@@ -286,8 +286,8 @@ class FadeIn(BaseEffect):
             self.color.tick(self.colors, time_delta)
 
         self.time_sum += time_delta
-        scalar_mult_fill(min(1, self.time_sum/self.time_length), self.colors)
         set_pixels(pixels, self.colors)
+        scalar_mult_fill(min(1, self.time_sum/self.time_length), pixels)
 
     def clone(self):
         return FadeIn(self.color.clone(), self.time_length)
@@ -307,8 +307,8 @@ class FadeOut(BaseEffect):
             self.color.tick(self.colors, time_delta)
 
         self.time_sum -= time_delta
-        scalar_mult_fill(max(0, self.time_sum/self.time_length), self.colors)
         set_pixels(pixels, self.colors)
+        scalar_mult_fill(max(0, self.time_sum/self.time_length), pixels)
 
     def clone(self):
         return FadeOut(self.color.clone(), self.time_length)
